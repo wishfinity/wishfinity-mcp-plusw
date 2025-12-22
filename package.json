@@ -1,7 +1,7 @@
 {
   "name": "wishfinity-mcp-plusw",
   "mcpName": "io.github.wishfinity/wishfinity-mcp-plusw",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for +W (Wishfinity Add to Wishlist) - save any product to your universal wishlist",
   "main": "dist/index.js",
   "bin": {
