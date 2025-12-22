@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-16/server.schema.json",
+  "name": "io.github.wishfinity/wishfinity-mcp-plusw",
+  "description": "Universal 'save for later' action for commerce. Save any product URL to your Wishfinity wishlist with one click.",
+  "repository": {
+    "url": "https://github.com/wishfinity/wishfinity-mcp-plusw",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "websiteUrl": "https://wishfinity.com",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "wishfinity-mcp-plusw",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
