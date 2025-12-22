@@ -26,7 +26,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/wishfinity/wishfinity-mcp-plusw"
+    "url": "git+https://github.com/wishfinity/wishfinity-mcp-plusw.git"
   },
   "homepage": "https://wishfinity.com",
   "dependencies": {
