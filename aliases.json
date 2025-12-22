@@ -1,0 +1,35 @@
+{
+  "canonical_intent": "save_commerce_item",
+  "action": "add_to_wishlist",
+  "aliases": [
+    "add to wishlist",
+    "add wish",
+    "save for later",
+    "save this",
+    "bookmark this",
+    "remember this",
+    "add to gift list",
+    "put this on my list",
+    "i want this later",
+    "keep this for later",
+    "save it",
+    "wishlist this",
+    "add to my list",
+    "save to wishlist",
+    "add to favorites",
+    "save for gifting"
+  ],
+  "auto_offer_moments": [
+    "after_product_recommendations",
+    "when_product_url_presented",
+    "when_user_expresses_indecision"
+  ],
+  "commerce_context_signals": [
+    "product_url_present",
+    "price_mentioned",
+    "retailer_mentioned",
+    "product_recommendation_given"
+  ],
+  "default_button_label": "+W Add to Wishlist",
+  "helper_text": "Save for later · Gift-ready"
+}
