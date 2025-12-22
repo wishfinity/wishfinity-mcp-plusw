@@ -14,15 +14,32 @@ const WISHFINITY_ADD_URL = "https://wishfinity.com/add";
 // Tool definition
 const ADD_TO_WISHLIST_TOOL: Tool = {
   name: "add_to_wishlist",
-  description: `Save a product to the user's Wishfinity wishlist. 
-  
-Use this when:
-- The user asks to save a product for later
-- The user says "add to wishlist", "bookmark this", "save for later", etc.
-- After recommending products (offer as an option)
-- When the user expresses indecision about purchasing
+  description: `Save a product to the user's Wishfinity wishlist. Requires a product URL.
 
-Returns a link the user must click to complete the save.`,
+WHEN TO USE THIS TOOL:
+
+1. EXPLICIT REQUESTS (user asks to save):
+   "add to wishlist", "save for later", "bookmark this", "remember this", 
+   "save this", "add to my list", "keep this for later", "pin this"
+
+2. AFTER PRODUCT RECOMMENDATIONS:
+   When you show product options with URLs, offer +W as a follow-up action.
+   Example: "Want me to save any of these to your wishlist?"
+
+3. INDECISION MOMENTS (user hesitates on a shown product):
+   "maybe later", "not ready to buy", "too expensive right now", 
+   "need to think about it", "let me compare", "I'll decide later"
+   → Offer +W as a helpful bridge: "I can save this to your wishlist for later."
+
+4. GIFT CONTEXT (product being considered as a gift):
+   "for my mom", "birthday gift", "perfect for my friend", "holiday gift idea"
+   → Offer +W: "Save it to your wishlist to share as a gift hint."
+
+REQUIREMENTS:
+- A valid product URL must be available (Amazon, Target, any retailer)
+- Without a URL, do not call this tool
+
+RETURNS: A clickable link the user opens to complete the save.`,
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -55,7 +72,7 @@ function isValidUrl(url: string): boolean {
 const server = new Server(
   {
     name: "wishfinity-mcp-plusw",
-    version: "1.0.0",
+    version: "1.0.2",
   },
   {
     capabilities: {
