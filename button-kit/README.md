@@ -1,45 +1,58 @@
 # +W Button Kit
 
-This folder contains UI assets for the +W (Add to Wishlist) button.
+UI assets for the +W (Add to Wishlist) button.
 
-## Contents
+## CDN URLs (Ready to Use)
 
-- `plusw-icon.svg` — The +W icon (add your SVG here)
-- `plusw-button.html` — HTML snippet for the button
-- `plusw-styles.css` — CSS styles and color tokens
+Embed directly via jsDelivr CDN:
 
-## Usage
+| Button | URL |
+|--------|-----|
+| Small | `https://cdn.jsdelivr.net/npm/wishfinity-mcp-plusw@1.0.1/button-kit/Wishfinity-Button-Small.svg` |
+| Medium | `https://cdn.jsdelivr.net/npm/wishfinity-mcp-plusw@1.0.1/button-kit/Wishfinity-Button-Medium.svg` |
+| Medium Outline | `https://cdn.jsdelivr.net/npm/wishfinity-mcp-plusw@1.0.1/button-kit/Wishfinity-Button-Medium-Outline.svg` |
+| Large | `https://cdn.jsdelivr.net/npm/wishfinity-mcp-plusw@1.0.1/button-kit/Wishfinity-Button-Large.svg` |
+| Large Outline | `https://cdn.jsdelivr.net/npm/wishfinity-mcp-plusw@1.0.1/button-kit/Wishfinity-Button-Large-Outline.svg` |
 
-### Basic HTML Button
+> 💡 Replace `@1.0.1` with `@latest` to always get the newest version.
 
+## HTML Snippets
+
+### Basic Link Button
 ```html
-<a href="https://wishfinity.com/add?url=ENCODED_URL" 
-   class="plusw-button" 
-   target="_blank">
-  <img src="plusw-icon.svg" alt="" class="plusw-icon">
-  +W Add to Wishlist
+<a href="https://wishfinity.com/add?url=ENCODED_PRODUCT_URL" target="_blank">
+  <img src="https://cdn.jsdelivr.net/npm/wishfinity-mcp-plusw@latest/button-kit/Wishfinity-Button-Medium.svg" 
+       alt="+W Add to Wishlist" 
+       height="40">
 </a>
 ```
 
-### Minimal Inline
-
+### Inline with Product
 ```html
-<a href="https://wishfinity.com/add?url=ENCODED_URL">+W</a>
+<div class="product-actions">
+  <a href="https://amazon.com/dp/B0EXAMPLE" target="_blank">View on Amazon</a>
+  <a href="https://wishfinity.com/add?url=https%3A%2F%2Famazon.com%2Fdp%2FB0EXAMPLE" target="_blank">
+    <img src="https://cdn.jsdelivr.net/npm/wishfinity-mcp-plusw@latest/button-kit/Wishfinity-Button-Small.svg" 
+         alt="+W" 
+         height="24">
+  </a>
+</div>
 ```
 
-## Colors
+## From npm
 
-| Token              | Value     | Usage                    |
-|--------------------|-----------|--------------------------|
-| `--plusw-primary`  | `#6366f1` | Button background        |
-| `--plusw-hover`    | `#4f46e5` | Button hover state       |
-| `--plusw-text`     | `#ffffff` | Button text              |
+If you've installed the package:
+```javascript
+// Path to assets
+const buttonPath = 'node_modules/wishfinity-mcp-plusw/button-kit/Wishfinity-Button-Medium.svg';
+```
 
-## Adding Your Assets
+## Button Variants
 
-Drop your SVG files and custom styles into this folder:
-
-1. `plusw-icon.svg` — Your +W logo/icon
-2. `plusw-icon-dark.svg` — Dark mode variant (optional)
-3. `plusw-button.html` — Complete button HTML
-4. `plusw-styles.css` — Your CSS styles
+| Variant | Use Case |
+|---------|----------|
+| Small | Inline with text, tight spaces |
+| Medium | Standard button placement |
+| Medium Outline | Light backgrounds |
+| Large | Hero sections, prominent CTAs |
+| Large Outline | Light backgrounds, hero sections |
