@@ -68,98 +68,112 @@ function isValidUrl(url: string): boolean {
   }
 }
 
-// Create the MCP server
-const server = new Server(
-  {
-    name: "wishfinity-mcp-plusw",
-    version: "1.0.2",
-  },
-  {
-    capabilities: {
-      tools: {},
+// Create and configure the MCP server
+function createServer(): Server {
+  const server = new Server(
+    {
+      name: "wishfinity-mcp-plusw",
+      version: "1.1.0",
     },
-  }
-);
-
-// Handle tool listing
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [ADD_TO_WISHLIST_TOOL],
-  };
-});
-
-// Handle tool calls
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-
-  if (name !== "add_to_wishlist") {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Unknown tool: ${name}`,
-        },
-      ],
-      isError: true,
-    };
-  }
-
-  const url = (args as { url?: string })?.url;
-
-  // Validate input
-  if (!url) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: "Error: Product URL is required",
-        },
-      ],
-      isError: true,
-    };
-  }
-
-  if (!isValidUrl(url)) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Error: Invalid URL format: ${url}`,
-        },
-      ],
-      isError: true,
-    };
-  }
-
-  // Generate the Wishfinity add link
-  const actionUrl = generateAddUrl(url);
-
-  // Return structured response
-  const response = {
-    action_url: actionUrl,
-    requires_user_action: true,
-    display_text: "Open to add to Wishfinity",
-    intent: "save_commerce_item",
-  };
-
-  return {
-    content: [
-      {
-        type: "text",
-        text: JSON.stringify(response, null, 2),
+    {
+      capabilities: {
+        tools: {},
       },
-    ],
-  };
-});
+    }
+  );
 
-// Start the server
+  // Handle tool listing
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return {
+      tools: [ADD_TO_WISHLIST_TOOL],
+    };
+  });
+
+  // Handle tool calls
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+
+    if (name !== "add_to_wishlist") {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Unknown tool: ${name}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    const url = (args as { url?: string })?.url;
+
+    // Validate input
+    if (!url) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Error: Product URL is required",
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    if (!isValidUrl(url)) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: Invalid URL format: ${url}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    // Generate the Wishfinity add link
+    const actionUrl = generateAddUrl(url);
+
+    // Return structured response
+    const response = {
+      action_url: actionUrl,
+      requires_user_action: true,
+      display_text: "Open to add to Wishfinity",
+      intent: "save_commerce_item",
+    };
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(response, null, 2),
+        },
+      ],
+    };
+  });
+
+  return server;
+}
+
+// Export for HTTP transport (Cloudflare Workers)
+export { createServer };
+
+// Start stdio server when run directly
 async function main() {
+  const server = createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Wishfinity +W MCP server running on stdio");
 }
 
-main().catch((error) => {
-  console.error("Server error:", error);
-  process.exit(1);
-});
+// Only run main() if this is the entry point (not imported as module)
+const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
+                     process.argv[1]?.endsWith('index.js');
+
+if (isMainModule) {
+  main().catch((error) => {
+    console.error("Server error:", error);
+    process.exit(1);
+  });
+}

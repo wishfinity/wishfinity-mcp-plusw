@@ -1,52 +1,63 @@
 {
   "name": "wishfinity-mcp-plusw",
-  "mcpName": "io.github.wishfinity/wishfinity-mcp-plusw",
-  "version": "1.0.2",
-  "description": "MCP server for +W (Wishfinity Add to Wishlist) - save any product to your universal wishlist",
+  "version": "1.1.0",
+  "description": "MCP server for +W (Wishfinity Add to Wishlist) - save any product to your universal wishlist. Works with Claude, ChatGPT, Gemini, LangChain, and any MCP client.",
   "main": "dist/index.js",
+  "type": "module",
   "bin": {
-    "wishfinity-mcp-plusw": "dist/index.js"
+    "wishfinity-mcp-plusw": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "button-kit",
+    "README.md",
+    "SPEC.md",
+    "INTEGRATION_GUIDE.md",
+    "aliases.json",
+    "server.json"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "cf:dev": "wrangler dev",
+    "cf:tail": "wrangler tail"
   },
   "keywords": [
     "mcp",
+    "model-context-protocol",
     "wishlist",
     "wishfinity",
     "commerce",
     "shopping",
-    "save-for-later",
-    "gift-list",
-    "ai-tools"
+    "ai",
+    "claude",
+    "chatgpt",
+    "gemini",
+    "langchain",
+    "save-for-later"
   ],
   "author": "Wishfinity",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wishfinity/wishfinity-mcp-plusw.git"
+    "url": "https://github.com/wishfinity/wishfinity-mcp-plusw"
   },
   "homepage": "https://wishfinity.com",
+  "bugs": {
+    "url": "https://github.com/wishfinity/wishfinity-mcp-plusw/issues"
+  },
+  "mcpName": "io.github.wishfinity/wishfinity-mcp-plusw",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.5.0"
+    "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241205.0",
     "@types/node": "^20.10.0",
     "typescript": "^5.3.0",
-    "ts-node": "^10.9.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "files": [
-    "dist",
-    "aliases.json",
-    "button-kit",
-    "README.md",
-    "SPEC.md",
-    "INTEGRATION_GUIDE.md"
-  ]
+    "wrangler": "^3.99.0"
+  }
 }

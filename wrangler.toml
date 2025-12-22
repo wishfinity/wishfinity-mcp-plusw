@@ -1,0 +1,19 @@
+# Cloudflare Workers configuration for Wishfinity +W MCP Server
+# Deploy with: wrangler deploy
+
+name = "wishfinity-mcp-plusw"
+main = "src/worker.ts"
+compatibility_date = "2024-12-01"
+
+# Optional: Custom domain (configure after first deploy)
+# routes = [
+#   { pattern = "mcp.wishfinity.com", custom_domain = true }
+# ]
+
+# Build settings
+[build]
+command = ""
+
+# Environment variables (if needed in future)
+[vars]
+WISHFINITY_BASE_URL = "https://wishfinity.com"

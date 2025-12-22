@@ -1,19 +1,27 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.wishfinity/wishfinity-mcp-plusw",
-  "description": "MCP server for +W (Wishfinity Add to Wishlist) - save any product to your universal wishlist",
+  "description": "Universal wishlist MCP - save any product URL to Wishfinity. Works with Claude, ChatGPT, Gemini, LangChain, and any MCP client.",
   "repository": {
     "url": "https://github.com/wishfinity/wishfinity-mcp-plusw",
     "source": "github"
   },
-  "version": "1.0.2",
+  "version": "1.1.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "wishfinity-mcp-plusw",
-      "version": "1.0.2",
+      "version": "1.1.0",
       "transport": {
         "type": "stdio"
+      }
+    }
+  ],
+  "remoteEndpoints": [
+    {
+      "url": "https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp",
+      "transport": {
+        "type": "streamable-http"
       }
     }
   ]
