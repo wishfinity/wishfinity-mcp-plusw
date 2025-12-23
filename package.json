@@ -1,6 +1,6 @@
 {
   "name": "wishfinity-mcp-plusw",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "MCP server for +W (Wishfinity Add to Wishlist) - save any product to your universal wishlist. Works with Claude, ChatGPT, Gemini, LangChain, and any MCP client.",
   "main": "dist/index.js",
   "type": "module",

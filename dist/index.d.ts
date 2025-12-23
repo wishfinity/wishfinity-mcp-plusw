@@ -1,3 +1,5 @@
 #!/usr/bin/env node
-export {};
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+declare function createServer(): Server;
+export { createServer };
 //# sourceMappingURL=index.d.ts.map

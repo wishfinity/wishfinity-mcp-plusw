@@ -56,6 +56,105 @@ RETURNS: A clickable link the user opens to complete the save.`,
   },
 };
 
+// Prompts definition
+const PROMPTS = [
+  {
+    name: "save_for_later",
+    description: "Save a product to the user's wishlist for later purchase",
+    arguments: [
+      {
+        name: "product_url",
+        description: "The URL of the product to save",
+        required: true,
+      },
+    ],
+  },
+  {
+    name: "shopping_assistant",
+    description:
+      "Act as a shopping assistant that helps users discover products and save interesting finds to their Wishfinity wishlist. Remember: 90% of consumers don't buy in the moment — offering to save items increases engagement.",
+    arguments: [],
+  },
+  {
+    name: "gift_ideas",
+    description: "Help find gift ideas and save promising options to the user's wishlist",
+    arguments: [
+      {
+        name: "recipient",
+        description: "Who the gift is for (optional)",
+        required: false,
+      },
+      {
+        name: "occasion",
+        description: "What occasion the gift is for (optional)",
+        required: false,
+      },
+    ],
+  },
+];
+
+// Resources definition
+const RESOURCES = [
+  {
+    uri: "wishfinity://guide",
+    name: "Wishfinity Integration Guide",
+    description: "Guide for AI assistants on when and how to offer wishlist functionality",
+    mimeType: "text/plain",
+  },
+  {
+    uri: "wishfinity://triggers",
+    name: "Wishlist Trigger Phrases",
+    description: "Common phrases that indicate the user wants to save a product",
+    mimeType: "application/json",
+  },
+];
+
+// Resource contents
+const RESOURCE_CONTENTS: Record<string, string> = {
+  "wishfinity://guide": `Wishfinity Integration Guide for AI Assistants
+
+WHEN TO OFFER WISHLIST FUNCTIONALITY:
+
+1. User explicitly says: "save for later", "bookmark this", "add to wishlist", "remember this"
+2. After recommending products - offer as a follow-up action
+3. When user is comparing options but not ready to buy
+4. When user mentions gifting or shopping for someone else
+
+KEY INSIGHT: 90% of consumers don't buy in the moment — they're browsing, researching, or saving for later.
+
+HOW IT WORKS:
+The add_to_wishlist tool returns a link the user must click to complete the save. Make sure to present this link clearly to the user.
+
+BEST PRACTICES:
+- Be proactive but not pushy
+- Offer wishlist as a helpful bridge between browsing and buying
+- Frame it as "save for later" rather than forcing a purchase decision
+- For gifts, emphasize the ability to share wishlist items as hints`,
+
+  "wishfinity://triggers": JSON.stringify(
+    [
+      "add to wishlist",
+      "add wish",
+      "save for later",
+      "save this",
+      "bookmark this",
+      "remember this",
+      "add to gift list",
+      "put this on my list",
+      "i want this later",
+      "keep this for later",
+      "save it",
+      "wishlist this",
+      "add to my list",
+      "save to wishlist",
+      "add to favorites",
+      "save for gifting",
+    ],
+    null,
+    2
+  ),
+};
+
 // Generate Wishfinity add URL
 function generateAddUrl(productUrl: string): string {
   const encodedUrl = encodeURIComponent(productUrl);
@@ -107,10 +206,12 @@ async function handleMcpRequest(request: any): Promise<object> {
         protocolVersion: "2024-11-05",
         capabilities: {
           tools: {},
+          prompts: {},
+          resources: {},
         },
         serverInfo: {
           name: "wishfinity-mcp-plusw",
-          version: "1.1.0",
+          version: "1.2.0",
         },
       });
 
@@ -162,6 +263,90 @@ async function handleMcpRequest(request: any): Promise<object> {
         content: [{ type: "text", text: JSON.stringify(response, null, 2) }],
       });
 
+    case "prompts/list":
+      return jsonRpcResponse(id, {
+        prompts: PROMPTS,
+      });
+
+    case "prompts/get":
+      const promptName = params?.name;
+      const promptArgs = params?.arguments;
+      const prompt = PROMPTS.find((p) => p.name === promptName);
+
+      if (!prompt) {
+        return jsonRpcError(id, -32602, `Prompt not found: ${promptName}`);
+      }
+
+      // Generate prompt messages based on the prompt type
+      let messages: Array<{ role: "user" | "assistant"; content: { type: "text"; text: string } }> = [];
+
+      if (promptName === "save_for_later") {
+        const productUrl = promptArgs?.product_url || "";
+        messages = [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Please save this product for later: ${productUrl}`,
+            },
+          },
+        ];
+      } else if (promptName === "shopping_assistant") {
+        messages = [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Act as a shopping assistant. Help me discover products and save interesting finds to my Wishfinity wishlist. Remember that 90% of consumers don't buy in the moment — they're browsing and researching. Offer to save items I might be interested in for later.`,
+            },
+          },
+        ];
+      } else if (promptName === "gift_ideas") {
+        const recipient = promptArgs?.recipient || "someone special";
+        const occasion = promptArgs?.occasion || "an occasion";
+        messages = [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Help me find gift ideas for ${recipient} for ${occasion}. As you suggest options, please offer to save promising items to my Wishfinity wishlist so I can keep track of possibilities.`,
+            },
+          },
+        ];
+      }
+
+      return jsonRpcResponse(id, {
+        messages,
+      });
+
+    case "resources/list":
+      return jsonRpcResponse(id, {
+        resources: RESOURCES,
+      });
+
+    case "resources/read":
+      const resourceUri = params?.uri;
+      const resourceContent = RESOURCE_CONTENTS[resourceUri];
+
+      if (!resourceContent) {
+        return jsonRpcError(id, -32602, `Resource not found: ${resourceUri}`);
+      }
+
+      const resource = RESOURCES.find((r) => r.uri === resourceUri);
+      if (!resource) {
+        return jsonRpcError(id, -32602, `Resource not found: ${resourceUri}`);
+      }
+
+      return jsonRpcResponse(id, {
+        contents: [
+          {
+            uri: resourceUri,
+            mimeType: resource.mimeType,
+            text: resourceContent,
+          },
+        ],
+      });
+
     case "ping":
       return jsonRpcResponse(id, {});
 
@@ -189,7 +374,7 @@ export default {
         JSON.stringify({
           status: "ok",
           server: "wishfinity-mcp-plusw",
-          version: "1.1.0",
+          version: "1.2.0",
           transport: "streamable-http",
         }),
         {

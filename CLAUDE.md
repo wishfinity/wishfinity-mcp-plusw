@@ -4,9 +4,9 @@
 
 This is an MCP (Model Context Protocol) server that adds wishlist functionality to AI assistants like Claude and ChatGPT. When users discuss products, the AI can offer to save items to their Wishfinity wishlist.
 
-**Current Version:** 1.1.0  
-**Status:** ✅ Production — All tests passing, ready for GTM  
-**Last Tested:** December 22, 2025
+**Current Version:** 1.2.0
+**Status:** ✅ Production — All tests passing, ready for GTM
+**Last Tested:** December 23, 2025
 
 ## Quick Commands
 
@@ -87,6 +87,21 @@ button-kit/           # SVG buttons for web embedding (NOT for chat display)
 - Discuss gifts ("looking for a birthday gift")
 - Ask to save/bookmark products
 - Share product URLs for review
+
+### MCP Prompts (v1.2.0+)
+
+Three prompts help developers integrate wishlist functionality:
+
+1. **save_for_later** - Quick product save with URL parameter
+2. **shopping_assistant** - Activates shopping assistant mode with engagement insights
+3. **gift_ideas** - Gift finding with optional recipient/occasion parameters
+
+### MCP Resources (v1.2.0+)
+
+Two resources provide context to AI assistants:
+
+1. **wishfinity://guide** (text/plain) - Integration guide with best practices
+2. **wishfinity://triggers** (application/json) - Trigger phrases from aliases.json
 
 ## Infrastructure
 
