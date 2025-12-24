@@ -153,7 +153,7 @@ function isValidUrl(url) {
 function createServer() {
     const server = new Server({
         name: "wishfinity-mcp-plusw",
-        version: "1.2.0",
+        version: "1.2.1",
     }, {
         capabilities: {
             tools: {},
