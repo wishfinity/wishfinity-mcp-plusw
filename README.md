@@ -273,6 +273,27 @@ CDN URLs:
 
 ---
 
+## Changelog
+
+### v1.2.2 (December 24, 2025)
+**Critical Fix:** npx execution for all developers
+- Fixed main module detection to work with npx symlinks
+- Resolves crash when running `npx wishfinity-mcp-plusw`
+- Package now works flawlessly for all npm installations
+
+### v1.2.1 (December 24, 2025)
+**Critical Fix:** MCP SDK compatibility
+- Updated `@modelcontextprotocol/sdk` dependency to `^1.25.0`
+- Resolves server disconnection with SDK 1.25.1+
+- Compatible with latest MCP SDK versions
+
+### v1.2.0 (December 23, 2025)
+- Added MCP prompts: `save_for_later`, `shopping_assistant`, `gift_ideas`
+- Added MCP resources: `wishfinity://guide`, `wishfinity://triggers`
+- Enhanced integration capabilities for AI assistants
+
+---
+
 ## License
 
 MIT

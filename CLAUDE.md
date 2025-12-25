@@ -4,9 +4,9 @@
 
 This is an MCP (Model Context Protocol) server that adds wishlist functionality to AI assistants like Claude and ChatGPT. When users discuss products, the AI can offer to save items to their Wishfinity wishlist.
 
-**Current Version:** 1.2.0
+**Current Version:** 1.2.2
 **Status:** ✅ Production — All tests passing, ready for GTM
-**Last Tested:** December 23, 2025
+**Last Tested:** December 24, 2025
 
 ## Quick Commands
 
@@ -158,6 +158,26 @@ Transport: Streamable HTTP
 | Indecision trigger (proactive offer) | ✅ Pass |
 | Gift context trigger (proactive offer) | ✅ Pass |
 | ChatGPT Desktop | ⏭️ Skipped (MCP not available) |
+
+## Version History
+
+### v1.2.2 (December 24, 2025)
+**Critical Fix:** npx execution for all developers
+- Fixed main module detection to work with npx symlinks
+- Simplified entry point check from complex ESM URL matching to `if (process.argv[1])`
+- **Impact:** Resolves crash when developers run `npx wishfinity-mcp-plusw`
+- **Result:** Package now works flawlessly for all npm installations
+
+### v1.2.1 (December 24, 2025)
+**Critical Fix:** MCP SDK compatibility
+- Updated `@modelcontextprotocol/sdk` dependency from `^1.0.0` to `^1.25.0`
+- **Impact:** Resolves server disconnection when SDK 1.25.1 was installed by npm
+- **Result:** Compatible with latest SDK versions
+
+### v1.2.0 (December 23, 2025)
+- Added MCP prompts: `save_for_later`, `shopping_assistant`, `gift_ideas`
+- Added MCP resources: `wishfinity://guide`, `wishfinity://triggers`
+- Enhanced integration capabilities for AI assistants
 
 ## Known Limitations
 
