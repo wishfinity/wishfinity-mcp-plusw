@@ -176,7 +176,7 @@ function createServer(): Server {
   const server = new Server(
     {
       name: "wishfinity-mcp-plusw",
-      version: "1.2.1",
+      version: "1.2.2",
     },
     {
       capabilities: {
@@ -363,11 +363,9 @@ async function main() {
   console.error("Wishfinity +W MCP server running on stdio");
 }
 
-// Only run main() if this is the entry point (not imported as module)
-const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
-                     process.argv[1]?.endsWith('index.js');
-
-if (isMainModule) {
+// Run main() when executed directly (not when imported as a module)
+// This handles execution via node, npx, and symlinks
+if (process.argv[1]) {
   main().catch((error) => {
     console.error("Server error:", error);
     process.exit(1);
