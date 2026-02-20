@@ -17,9 +17,11 @@ User: "Find me a good espresso machine under $200"
 AI: Here are 3 options...
     [+W Add to Wishlist] [View on Amazon]
 ```
+
 ## Zero-dependency option: /add-wish
 
 Don't need the full MCP server? The `/add-wish` skill teaches any AI agent the +W pattern using just a URL — no npm, no server, no setup:
+
 ```
 https://wishfinity.com/add?url={any_product_url}
 ```
@@ -55,11 +57,6 @@ Add to your MCP client configuration:
 
 Best for server-side agents, LangChain production deployments, and hosted AI applications.
 
-```
-https://mcp.wishfinity.com/mcp
-```
-
-Or use the Cloudflare Workers URL:
 ```
 https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp
 ```
@@ -127,10 +124,10 @@ async def main():
             "transport": "stdio",
         }
     })
-    
+
     tools = await client.get_tools()
     agent = create_agent("openai:gpt-4", tools)
-    
+
     result = await agent.ainvoke({
         "messages": [{"role": "user", "content": "Find me a coffee maker and save it to my wishlist"}]
     })
@@ -141,7 +138,7 @@ For production (HTTP transport):
 ```python
 client = MultiServerMCPClient({
     "wishfinity": {
-        "url": "https://mcp.wishfinity.com/mcp",
+        "url": "https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp",
         "transport": "streamable_http",
     }
 })
@@ -166,7 +163,7 @@ async def main():
             instructions="Help users find products and save them to wishlists.",
             mcp_servers=[server],
         )
-        
+
         result = await Runner.run(agent, "Find a good gift for a coffee lover and save it")
         print(result.final_output)
 ```
@@ -250,7 +247,7 @@ See [aliases.json](aliases.json) for the full list of trigger phrases.
 | Transport | Use Case | Endpoint |
 |-----------|----------|----------|
 | **stdio** | Local clients (Claude Desktop, Cursor, etc.) | `npx wishfinity-mcp-plusw` |
-| **HTTP** | Remote/server-side agents | `https://mcp.wishfinity.com/mcp` |
+| **HTTP** | Remote/server-side agents | `https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp` |
 
 ---
 
@@ -286,18 +283,23 @@ CDN URLs:
 ## Changelog
 
 ### v1.2.2 (December 24, 2025)
+
 **Critical Fix:** npx execution for all developers
+
 - Fixed main module detection to work with npx symlinks
 - Resolves crash when running `npx wishfinity-mcp-plusw`
 - Package now works flawlessly for all npm installations
 
 ### v1.2.1 (December 24, 2025)
+
 **Critical Fix:** MCP SDK compatibility
+
 - Updated `@modelcontextprotocol/sdk` dependency to `^1.25.0`
 - Resolves server disconnection with SDK 1.25.1+
 - Compatible with latest MCP SDK versions
 
 ### v1.2.0 (December 23, 2025)
+
 - Added MCP prompts: `save_for_later`, `shopping_assistant`, `gift_ideas`
 - Added MCP resources: `wishfinity://guide`, `wishfinity://triggers`
 - Enhanced integration capabilities for AI assistants
