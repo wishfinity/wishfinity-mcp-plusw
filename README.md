@@ -17,6 +17,16 @@ User: "Find me a good espresso machine under $200"
 AI: Here are 3 options...
     [+W Add to Wishlist] [View on Amazon]
 ```
+## Zero-dependency option: /add-wish
+
+Don't need the full MCP server? The `/add-wish` skill teaches any AI agent the +W pattern using just a URL — no npm, no server, no setup:
+```
+https://wishfinity.com/add?url={any_product_url}
+```
+
+→ [View the /add-wish skill file](./add-wish/SKILL.md)
+
+Works with any AI platform. The MCP server below adds richer tool integration, but `/add-wish` is all you need to get started.
 
 ## Quick start
 
