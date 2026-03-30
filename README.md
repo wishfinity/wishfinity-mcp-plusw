@@ -30,6 +30,10 @@ https://wishfinity.com/add?url={any_product_url}
 
 Works with any AI platform. The MCP server below adds richer tool integration, but `/add-wish` is all you need to get started.
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/wishfinity-wishfinity-mcp-plusw).
+
 ## Quick start
 
 ### Option 1: Local installation (stdio transport)
