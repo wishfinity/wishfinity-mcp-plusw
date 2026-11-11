@@ -158,7 +158,7 @@ BEST PRACTICES:
 // Generate Wishfinity add URL
 function generateAddUrl(productUrl: string): string {
   const encodedUrl = encodeURIComponent(productUrl);
-  return `${WISHFINITY_ADD_URL}?url=${encodedUrl}`;
+  return `${WISHFINITY_ADD_URL}?url=${encodedUrl}&source=mcp-plusw`;
 }
 
 // Validate URL format
