@@ -45,6 +45,9 @@ RETURNS: A clickable link the user opens to complete the save.`,
         },
         required: ["url"],
     },
+    annotations: {
+        readOnlyHint: true,
+    },
 };
 // Prompts definition
 const PROMPTS = [
