@@ -214,7 +214,7 @@ async function handleMcpRequest(request: any): Promise<object> {
         },
         serverInfo: {
           name: "wishfinity-mcp-plusw",
-          version: "1.2.0",
+          version: "1.2.3",
         },
       });
 
@@ -377,7 +377,7 @@ export default {
         JSON.stringify({
           status: "ok",
           server: "wishfinity-mcp-plusw",
-          version: "1.2.0",
+          version: "1.2.3",
           transport: "streamable-http",
         }),
         {

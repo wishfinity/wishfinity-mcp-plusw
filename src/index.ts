@@ -179,7 +179,7 @@ function createServer(): Server {
   const server = new Server(
     {
       name: "wishfinity-mcp-plusw",
-      version: "1.2.2",
+      version: "1.2.3",
     },
     {
       capabilities: {
