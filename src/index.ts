@@ -54,6 +54,9 @@ RETURNS: A clickable link the user opens to complete the save.`,
     },
     required: ["url"],
   },
+  annotations: {
+    readOnlyHint: true,
+  },
 };
 
 // Prompts definition
@@ -158,7 +161,7 @@ BEST PRACTICES:
 // Generate Wishfinity add URL
 function generateAddUrl(productUrl: string): string {
   const encodedUrl = encodeURIComponent(productUrl);
-  return `${WISHFINITY_ADD_URL}?url=${encodedUrl}`;
+  return `${WISHFINITY_ADD_URL}?url=${encodedUrl}&source=mcp-plusw`;
 }
 
 // Validate URL format
@@ -176,7 +179,7 @@ function createServer(): Server {
   const server = new Server(
     {
       name: "wishfinity-mcp-plusw",
-      version: "1.2.2",
+      version: "1.2.3",
     },
     {
       capabilities: {

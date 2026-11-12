@@ -45,6 +45,9 @@ RETURNS: A clickable link the user opens to complete the save.`,
         },
         required: ["url"],
     },
+    annotations: {
+        readOnlyHint: true,
+    },
 };
 // Prompts definition
 const PROMPTS = [
@@ -139,7 +142,7 @@ BEST PRACTICES:
 // Generate Wishfinity add URL
 function generateAddUrl(productUrl) {
     const encodedUrl = encodeURIComponent(productUrl);
-    return `${WISHFINITY_ADD_URL}?url=${encodedUrl}`;
+    return `${WISHFINITY_ADD_URL}?url=${encodedUrl}&source=mcp-plusw`;
 }
 // Validate URL format
 function isValidUrl(url) {
@@ -187,7 +190,7 @@ async function handleMcpRequest(request) {
                 },
                 serverInfo: {
                     name: "wishfinity-mcp-plusw",
-                    version: "1.2.0",
+                    version: "1.2.3",
                 },
             });
         case "notifications/initialized":
@@ -326,7 +329,7 @@ export default {
             return new Response(JSON.stringify({
                 status: "ok",
                 server: "wishfinity-mcp-plusw",
-                version: "1.2.0",
+                version: "1.2.3",
                 transport: "streamable-http",
             }), {
                 headers: {
