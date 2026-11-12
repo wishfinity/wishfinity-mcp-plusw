@@ -9,6 +9,7 @@ const WISHFINITY_ADD_URL = "https://wishfinity.com/add";
 // Tool definition (same as stdio version)
 const ADD_TO_WISHLIST_TOOL = {
     name: "add_to_wishlist",
+    title: "Add to Wishfinity wishlist",
     description: `Save a product to the user's Wishfinity wishlist. Requires a product URL.
 
 WHEN TO USE THIS TOOL:
@@ -46,6 +47,7 @@ RETURNS: A clickable link the user opens to complete the save.`,
         required: ["url"],
     },
     annotations: {
+        title: "Add to Wishfinity wishlist",
         readOnlyHint: true,
     },
 };
