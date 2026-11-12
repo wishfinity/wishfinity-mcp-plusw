@@ -17,12 +17,14 @@
       }
     }
   ],
-  "remoteEndpoints": [
+  "remotes": [
     {
-      "url": "https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp",
-      "transport": {
-        "type": "streamable-http"
-      }
+      "type": "streamable-http",
+      "url": "https://mcp.wishfinity.com/mcp"
+    },
+    {
+      "type": "streamable-http",
+      "url": "https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp"
     }
   ]
 }
