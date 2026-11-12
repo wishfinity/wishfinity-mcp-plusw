@@ -151,7 +151,7 @@ async function handleMcpRequest(request) {
                 },
                 serverInfo: {
                     name: "wishfinity-mcp-plusw",
-                    version: "1.2.3",
+                    version: "1.2.4",
                 },
             });
         case "notifications/initialized":
@@ -290,7 +290,7 @@ export default {
             return new Response(JSON.stringify({
                 status: "ok",
                 server: "wishfinity-mcp-plusw",
-                version: "1.2.3",
+                version: "1.2.4",
                 transport: "streamable-http",
             }), {
                 headers: {
