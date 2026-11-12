@@ -209,7 +209,7 @@ December 2025 (historical, not an automated suite):
 2. **ChatGPT Desktop** — Doesn't support MCP configuration yet; separate ChatGPT App built via OpenAI Apps SDK (pending publishing)
 3. **Amazon blocking** — Claude can't fetch Amazon product pages directly, but wishlist save still works
 4. **`mcp.wishfinity.com` not wired to the Worker** — it currently redirects to the main site; only the `workers.dev` endpoint is live. (v1.3.0 will revisit the custom domain + current-spec Streamable HTTP.)
-5. **`package-lock.json` is stale** — root version 1.1.0, records sdk `^1.0.0` (vs `package.json` `^1.25.0`), so `npm ci` would fail. Regenerate with `npm install` as a separate hygiene step.
+5. **`package-lock.json` metadata is stale** — its root `version` reads 1.1.0 and it records sdk `^1.0.0` (vs `package.json` `^1.25.0`). This does **not** break `npm ci`: measured 2026-11-11, `npm ci` **succeeds** (153 packages on Lee's machine) and is **required before `npm publish`**, because `prepublishOnly` runs `tsc` (PDR § THE MCP SERVER row 3). Regenerating the lockfile with `npm install` is deferred to v1.3.0 (folded into the SDK-update commit).
 
 ## Related Projects
 
