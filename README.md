@@ -58,6 +58,12 @@ Add to your MCP client configuration:
 Best for server-side agents, LangChain production deployments, and hosted AI applications.
 
 ```
+https://mcp.wishfinity.com/mcp
+```
+
+Alternate endpoint (always available):
+
+```
 https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp
 ```
 
@@ -138,7 +144,8 @@ For production (HTTP transport):
 ```python
 client = MultiServerMCPClient({
     "wishfinity": {
-        "url": "https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp",
+        "url": "https://mcp.wishfinity.com/mcp",
+        # Alternate: https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp
         "transport": "streamable_http",
     }
 })
@@ -247,7 +254,7 @@ See [aliases.json](aliases.json) for the full list of trigger phrases.
 | Transport | Use Case | Endpoint |
 |-----------|----------|----------|
 | **stdio** | Local clients (Claude Desktop, Cursor, etc.) | `npx wishfinity-mcp-plusw` |
-| **HTTP** | Remote/server-side agents | `https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp` |
+| **HTTP** | Remote/server-side agents | `https://mcp.wishfinity.com/mcp` (alternate: `https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp`) |
 
 ---
 

@@ -6,23 +6,25 @@
     "url": "https://github.com/wishfinity/wishfinity-mcp-plusw",
     "source": "github"
   },
-  "version": "1.2.3",
+  "version": "1.2.4",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "wishfinity-mcp-plusw",
-      "version": "1.2.3",
+      "version": "1.2.4",
       "transport": {
         "type": "stdio"
       }
     }
   ],
-  "remoteEndpoints": [
+  "remotes": [
     {
-      "url": "https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp",
-      "transport": {
-        "type": "streamable-http"
-      }
+      "type": "streamable-http",
+      "url": "https://mcp.wishfinity.com/mcp"
+    },
+    {
+      "type": "streamable-http",
+      "url": "https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp"
     }
   ]
 }
