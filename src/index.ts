@@ -35,7 +35,7 @@ const ADD_TO_WISHLIST_TOOL: Tool = {
     title: "Add to Wishfinity wishlist",
     readOnlyHint: true,
     destructiveHint: false,
-    openWorldHint: true,
+    openWorldHint: false,
   },
 };
 

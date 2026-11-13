@@ -12,12 +12,12 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "openWorldHint": true
+        "openWorldHint": false
       },
       "justifications": {
         "read_only_justification": "The tool only builds a wishfinity.com save link from the given product URL and returns it; it creates, updates and deletes nothing.",
         "destructive_justification": "Nothing the tool does is irreversible; it returns a link the user chooses to open, and makes no server-side change.",
-        "open_world_justification": "The tool accepts a product URL for any store on the open internet, so the set of destinations it can save is open-ended."
+        "open_world_justification": "Does not access the internet or external systems when called; it returns a link to wishfinity.com that the user chooses to open."
       }
     }
   ],

@@ -40,12 +40,11 @@ upload `chatgpt-app-submission.json` separately when the form asks.
   sheet §T).
 
 ## `openWorldHint` note
-Set to `true`, justified as "accepts a product URL for any store on the open
-internet (an open-ended set of destinations)." OpenAI's official wording is
-"Set to `true` if the tool accesses the public internet or open-ended external
-entities." A narrower reading — the tool fetches nothing at call time and only
-builds a `wishfinity.com` link — would support `false`. We follow the
-open-ended-destinations reading; revisit if a reviewer flags it.
+Set to `false` (Lee's ruling, 2026-11-13). OpenAI's official wording is "Set to
+`true` if the tool accesses the public internet or open-ended external
+entities." This tool accesses nothing when called; it only builds a first-party
+`wishfinity.com` link that the user chooses to open, so `false` is the literal
+reading.
 
 ## Source of the schema
 - Plugin / MCP manifests: https://developers.openai.com/plugins/build/plugins.md
