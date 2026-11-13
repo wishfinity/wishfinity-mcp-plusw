@@ -1,0 +1,40 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "wishfinity",
+  "version": "1.2.5",
+  "description": "Save any product link to your Wishfinity wishlist.",
+  "author": {
+    "name": "Wishfinity",
+    "url": "https://wishfinity.com"
+  },
+  "homepage": "https://wishfinity.com",
+  "repository": "https://github.com/wishfinity/wishfinity-mcp-plusw",
+  "license": "MIT",
+  "keywords": ["wishlist", "shopping", "save-for-later", "commerce"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Wishfinity +W",
+        "shortDescription": "Save products to your wishlist",
+        "longDescription": "Wishfinity +W saves any product to your universal Wishfinity wishlist. Share a product page link and +W returns a link that saves it to wishfinity.com, where you can find it again, sort it into lists, and share it with friends and family. It works with any store; Wishfinity looks up the product's name, description, image and price itself when the link is opened. People without an account can sign up when they open the link.",
+        "developerName": "Wishfinity",
+        "category": "Shopping",
+        "capabilities": ["Save a product link to a Wishfinity wishlist"],
+        "websiteURL": "https://wishfinity.com",
+        "privacyPolicyURL": "https://info.wishfinity.com/privacy",
+        "termsOfServiceURL": "https://info.wishfinity.com/terms",
+        "supportURL": "https://info.wishfinity.com/help/overview",
+        "defaultPrompt": [
+          "Save this for later: [product link]",
+          "Add this to my Wishfinity wishlist",
+          "Save this as a gift idea for my mom"
+        ],
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/icon.png"
+      },
+      "review": {
+        "commerce": false
+      }
+    }
+  }
+}
