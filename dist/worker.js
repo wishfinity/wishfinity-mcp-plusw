@@ -24,6 +24,8 @@ const ADD_TO_WISHLIST_TOOL = {
     annotations: {
         title: "Add to Wishfinity wishlist",
         readOnlyHint: true,
+        destructiveHint: false,
+        openWorldHint: true,
     },
 };
 // Prompts definition
