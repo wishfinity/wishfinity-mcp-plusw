@@ -324,9 +324,17 @@ async function handleMcpRequest(request: any): Promise<object> {
   }
 }
 
+// Worker environment bindings (vars + secrets)
+interface Env {
+  // Set by Lee with `wrangler secret put OPENAI_APPS_CHALLENGE` during the
+  // OpenAI submission; unset otherwise.
+  OPENAI_APPS_CHALLENGE?: string;
+  WISHFINITY_BASE_URL?: string;
+}
+
 // Cloudflare Worker fetch handler
 export default {
-  async fetch(request: Request): Promise<Response> {
+  async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
     // Handle CORS preflight
@@ -353,6 +361,24 @@ export default {
           },
         }
       );
+    }
+
+    // OpenAI Apps domain-verification challenge. Served as plain text from a
+    // Worker secret (OPENAI_APPS_CHALLENGE); a real 404 while the secret is
+    // unset. CloudFront forwards every path, so this answers on both
+    // workers.dev and mcp.wishfinity.com with no route change.
+    if (url.pathname === "/.well-known/openai-apps-challenge") {
+      const token = env.OPENAI_APPS_CHALLENGE?.trim();
+      if (token) {
+        return new Response(token, {
+          status: 200,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
+        });
+      }
+      return new Response("Not Found", {
+        status: 404,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
     }
 
     // MCP endpoint (Streamable HTTP)
