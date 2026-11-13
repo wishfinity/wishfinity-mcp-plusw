@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "app_info": {
+    "display_name": "Wishfinity +W",
+    "subtitle": "Save products to your wishlist",
+    "description": "Wishfinity +W saves any product to your universal Wishfinity wishlist. Share a product page link and +W returns a link that saves it to wishfinity.com, where you can find it again, sort it into lists, and share it with friends and family.",
+    "category": "Shopping"
+  },
+  "tools": [
+    {
+      "name": "add_to_wishlist",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "justifications": {
+        "read_only_justification": "The tool only builds a wishfinity.com save link from the given product URL and returns it; it creates, updates and deletes nothing.",
+        "destructive_justification": "Nothing the tool does is irreversible; it returns a link the user chooses to open, and makes no server-side change.",
+        "open_world_justification": "Does not access the internet or external systems when called; it returns a link to wishfinity.com that the user chooses to open."
+      }
+    }
+  ],
+  "test_cases": [
+    {
+      "description": "Save a specific Amazon product link for later.",
+      "user_prompt": "Save this for later: https://www.amazon.com/dp/B0D1XD1ZV3",
+      "tools_triggered": ["add_to_wishlist"],
+      "expected_output": "Returns a '+W Save to Wishfinity' link to wishfinity.com/add for that product, with no warning note."
+    },
+    {
+      "description": "Add a specific Target product to the wishlist.",
+      "user_prompt": "Add this to my Wishfinity wishlist: https://www.target.com/p/some-product/-/A-12345678",
+      "tools_triggered": ["add_to_wishlist"],
+      "expected_output": "Returns a '+W Save to Wishfinity' link for the product; the saved link preserves source=mcp-plusw."
+    },
+    {
+      "description": "Save a product as a gift idea.",
+      "user_prompt": "Save this as a gift idea for my mom: https://www.etsy.com/listing/123456789/handmade-mug",
+      "tools_triggered": ["add_to_wishlist"],
+      "expected_output": "Returns a '+W Save to Wishfinity' link for the Etsy listing."
+    },
+    {
+      "description": "Bookmark a Walmart product.",
+      "user_prompt": "Bookmark this https://www.walmart.com/ip/Some-Product/123456789",
+      "tools_triggered": ["add_to_wishlist"],
+      "expected_output": "Returns a '+W Save to Wishfinity' link for the product."
+    },
+    {
+      "description": "Save a product whose URL carries its own query parameters.",
+      "user_prompt": "Save https://www.amazon.com/dp/B004D9XYWU?th=1&psc=1 to my wishlist",
+      "tools_triggered": ["add_to_wishlist"],
+      "expected_output": "Returns a '+W Save to Wishfinity' link whose url parameter keeps the full product URL (including its &-separated query) percent-encoded."
+    }
+  ],
+  "negative_test_cases": [
+    {
+      "description": "No product URL is provided.",
+      "user_prompt": "Add a cordless vacuum to my wishlist",
+      "tools_triggered": [],
+      "expected_output": "The tool requires a product URL, so the assistant asks the user for the product link instead of calling the tool."
+    },
+    {
+      "description": "A search-results page, not a single product.",
+      "user_prompt": "Save https://www.amazon.com/s?k=coffee+maker",
+      "tools_triggered": ["add_to_wishlist"],
+      "expected_output": "The tool returns the link but includes a note that this looks like a search results page, not a single product; the assistant relays the note and suggests a specific product link."
+    },
+    {
+      "description": "A request unrelated to saving a product.",
+      "user_prompt": "What's the weather in Chicago today?",
+      "tools_triggered": [],
+      "expected_output": "The tool is not relevant and is not called."
+    }
+  ]
+}

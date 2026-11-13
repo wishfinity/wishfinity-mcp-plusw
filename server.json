@@ -2,16 +2,25 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.wishfinity/wishfinity-mcp-plusw",
   "description": "Save any product URL to your Wishfinity wishlist. Works with any MCP client.",
+  "title": "Wishfinity +W",
+  "websiteUrl": "https://info.wishfinity.com/integrations/ai/claude",
+  "icons": [
+    {
+      "src": "https://wishfinity.com/w_icon_256.png",
+      "sizes": ["256x256"],
+      "mimeType": "image/png"
+    }
+  ],
   "repository": {
     "url": "https://github.com/wishfinity/wishfinity-mcp-plusw",
     "source": "github"
   },
-  "version": "1.2.4",
+  "version": "1.2.5",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "wishfinity-mcp-plusw",
-      "version": "1.2.4",
+      "version": "1.2.5",
       "transport": {
         "type": "stdio"
       }

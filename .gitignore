@@ -19,3 +19,6 @@ npm-debug.log*
 
 # Local test artifacts
 *.docx
+
+# ChatGPT plugin ZIP — a build artifact produced by chatgpt-plugin/build.sh
+chatgpt-plugin/dist/
