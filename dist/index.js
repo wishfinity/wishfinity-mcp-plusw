@@ -2,19 +2,20 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, ListPromptsRequestSchema, GetPromptRequestSchema, ListResourcesRequestSchema, ReadResourceRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
+import { classifyWishlistUrl } from "./wishlist-url.js";
 // Wishfinity base URL
 const WISHFINITY_ADD_URL = "https://wishfinity.com/add";
 // Tool definition
 const ADD_TO_WISHLIST_TOOL = {
     name: "add_to_wishlist",
     title: "Add to Wishfinity wishlist",
-    description: `Saves a product to the user's Wishfinity wishlist, so they can find it again, sort it into lists, and share it with friends and family. Use when the user wants to save, bookmark, remember or wishlist a product, or keep a gift idea for later (e.g. "save this for later", "add this to my wishlist", "save this as a gift idea for my mom"). Requires the product page URL; works with any store. Returns a link the user opens to finish the save on wishfinity.com, where people without an account can sign up. Does not read or change existing lists.`,
+    description: `Saves a product to the user's Wishfinity wishlist, so they can find it again, sort it into lists, and share it with friends and family. Use when the user wants to save, bookmark, remember or wishlist a product, or keep a gift idea for later (e.g. "save this for later", "add this to my wishlist", "save this as a gift idea for my mom"). Requires a specific product page URL, not a search-results or category page; if only a search page is available, ask the user for the product link. Works with any store. Wishfinity looks up the product's name, description, image and price itself when the link is opened. Returns a link the user opens to finish the save on wishfinity.com, where people without an account can sign up. Does not read or change existing lists.`,
     inputSchema: {
         type: "object",
         properties: {
             url: {
                 type: "string",
-                description: "The product page URL to save to the wishlist",
+                description: "The specific product page URL to save. Not a search-results or category page; if only a search page is available, ask the user for the product link.",
             },
         },
         required: ["url"],
@@ -173,12 +174,14 @@ function createServer() {
         }
         // Generate the Wishfinity add link
         const actionUrl = generateAddUrl(url);
+        const { note } = classifyWishlistUrl(url);
         // Return structured response
         const response = {
             action_url: actionUrl,
             requires_user_action: true,
-            display_text: "Open to add to Wishfinity",
+            display_text: "+W Save to Wishfinity",
             intent: "save_commerce_item",
+            ...(note ? { note } : {}),
         };
         return {
             content: [
