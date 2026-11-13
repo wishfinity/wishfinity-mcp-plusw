@@ -15,12 +15,12 @@
     "url": "https://github.com/wishfinity/wishfinity-mcp-plusw",
     "source": "github"
   },
-  "version": "1.2.4",
+  "version": "1.2.5",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "wishfinity-mcp-plusw",
-      "version": "1.2.4",
+      "version": "1.2.5",
       "transport": {
         "type": "stdio"
       }

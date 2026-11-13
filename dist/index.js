@@ -120,7 +120,7 @@ function isValidUrl(url) {
 function createServer() {
     const server = new Server({
         name: "wishfinity-mcp-plusw",
-        version: "1.2.4",
+        version: "1.2.5",
     }, {
         capabilities: {
             tools: {},
