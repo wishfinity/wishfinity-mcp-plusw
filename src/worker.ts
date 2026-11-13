@@ -381,6 +381,26 @@ export default {
       });
     }
 
+    // We do not implement OAuth. MCP clients probe these discovery paths; answer
+    // an explicit 404 with a non-HTML body so a client never mistakes an HTML
+    // page for an authorization-server / protected-resource document. (Malformed
+    // JSON to /mcp already returns a JSON-RPC -32700 body, see the POST handler.)
+    if (
+      url.pathname === "/.well-known/oauth-authorization-server" ||
+      url.pathname === "/.well-known/oauth-protected-resource"
+    ) {
+      return new Response(
+        JSON.stringify({ error: "not_found", reason: "This server does not use OAuth." }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          },
+        }
+      );
+    }
+
     // MCP endpoint (Streamable HTTP)
     if (url.pathname === "/mcp") {
       // GET request - used for SSE streaming (optional, return method not allowed for simple impl)
