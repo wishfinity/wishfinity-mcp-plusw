@@ -224,8 +224,16 @@ function createServer(): Server {
       ...(note ? { note } : {}),
     };
 
+    // Two text blocks: block 0 is a ready-made markdown link some clients
+    // (e.g. Grok) will surface verbatim instead of paraphrasing display_text;
+    // block 1 is the JSON contract, unchanged, so clients that parse it still
+    // get a clean, independently-parseable object. (G.17 S1 / #195.)
     return {
       content: [
+        {
+          type: "text",
+          text: `[${response.display_text}](${actionUrl})`,
+        },
         {
           type: "text",
           text: JSON.stringify(response, null, 2),
