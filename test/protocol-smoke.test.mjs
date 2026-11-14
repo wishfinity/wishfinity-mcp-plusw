@@ -29,6 +29,8 @@ const STDIO_ENTRY = join(REPO, "dist", "index.js");
 // be updated in the same commit — never silently.
 const SERVER_NAME = "wishfinity-mcp-plusw";
 const SERVER_VERSION = "1.2.5";
+const ADVERTISED_PROTOCOL = "2025-06-18"; // what the server returns when not asked for a supported legacy one
+const LEGACY_PROTOCOL = "2024-11-05"; // a legacy revision that must still negotiate (back-compat)
 const TOOL_NAME = "add_to_wishlist";
 const TOOL_TITLE = "Add to Wishfinity wishlist";
 const DISPLAY_TEXT = "+W Save to Wishfinity";
@@ -133,24 +135,23 @@ test("stdio transport (node dist/index.js)", async (t) => {
   const client = makeStdioClient();
   try {
     // MCP handshake: initialize -> notifications/initialized, then requests.
+    // Request a legacy revision: the SDK must echo it back (back-compat).
     const initResp = await client.request("initialize", {
-      protocolVersion: "2024-11-05",
+      protocolVersion: LEGACY_PROTOCOL,
       capabilities: {},
       clientInfo: { name: "smoke-harness", version: "0.0.0" },
     });
     const init = initResp.result;
 
-    await t.test("initialize returns serverInfo + protocolVersion", () => {
+    await t.test("initialize returns serverInfo + negotiates the legacy version", () => {
       assert.ok(init, "initialize result present");
       assert.equal(init.serverInfo.name, SERVER_NAME, "serverInfo.name");
       assert.equal(init.serverInfo.version, SERVER_VERSION, "serverInfo.version");
-      assert.ok(
-        typeof init.protocolVersion === "string" && /^\d{4}-\d{2}-\d{2}$/.test(init.protocolVersion),
-        `protocolVersion is a date-shaped string (got ${JSON.stringify(init.protocolVersion)})`
-      );
+      // stdio sets no fixed version — the SDK negotiates. A legacy client must
+      // still get its requested version back.
+      assert.equal(init.protocolVersion, LEGACY_PROTOCOL, "SDK echoes the requested legacy version (back-compat)");
     });
-    // Negotiated value is SDK-driven on stdio; surface it for the report.
-    t.diagnostic(`stdio negotiated protocolVersion = ${init.protocolVersion}`);
+    t.diagnostic(`stdio negotiated protocolVersion (requested ${LEGACY_PROTOCOL}) = ${init.protocolVersion}`);
 
     client.notify("notifications/initialized", {});
 
@@ -170,6 +171,20 @@ test("stdio transport (node dist/index.js)", async (t) => {
       const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: { url: SEARCH_URL } });
       assertSearchPayload(parseToolCallPayload(resp.result));
     });
+  } finally {
+    client.close();
+  }
+});
+
+test("stdio negotiates a requested current revision (SDK echo-or-default)", async () => {
+  const client = makeStdioClient();
+  try {
+    const r = await client.request("initialize", {
+      protocolVersion: ADVERTISED_PROTOCOL,
+      capabilities: {},
+      clientInfo: { name: "smoke-harness", version: "0.0.0" },
+    });
+    assert.equal(r.result.protocolVersion, ADVERTISED_PROTOCOL, "stdio echoes a supported current revision");
   } finally {
     client.close();
   }
@@ -197,16 +212,20 @@ function rpc(method, params, id = 1) {
 test("http transport (in-process worker.fetch)", async (t) => {
   const worker = await loadWorker();
 
-  await t.test("initialize returns serverInfo + protocolVersion", async () => {
-    const res = await post(worker, rpc("initialize", {
-      protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "smoke", version: "0" },
-    }));
-    assert.equal(res.status, 200);
-    const body = await res.json();
-    assert.equal(body.result.serverInfo.name, SERVER_NAME, "serverInfo.name");
-    assert.equal(body.result.serverInfo.version, SERVER_VERSION, "serverInfo.version");
-    assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(body.result.protocolVersion), "protocolVersion date-shaped");
-    t.diagnostic(`http advertised protocolVersion = ${body.result.protocolVersion}`);
+  await t.test("initialize advertises 2025-06-18 by default; echoes a supported legacy version", async () => {
+    // Default: no protocolVersion requested -> the advertised/preferred value.
+    const def = await (await post(worker, rpc("initialize", {
+      capabilities: {}, clientInfo: { name: "smoke", version: "0" },
+    }))).json();
+    assert.equal(def.result.serverInfo.name, SERVER_NAME, "serverInfo.name");
+    assert.equal(def.result.serverInfo.version, SERVER_VERSION, "serverInfo.version");
+    assert.equal(def.result.protocolVersion, ADVERTISED_PROTOCOL, "advertised protocolVersion");
+    t.diagnostic(`http advertised protocolVersion = ${def.result.protocolVersion}`);
+    // Back-compat: a client requesting legacy 2024-11-05 still negotiates it.
+    const legacy = await (await post(worker, rpc("initialize", {
+      protocolVersion: LEGACY_PROTOCOL, capabilities: {}, clientInfo: { name: "smoke", version: "0" },
+    }))).json();
+    assert.equal(legacy.result.protocolVersion, LEGACY_PROTOCOL, "legacy client still negotiates 2024-11-05");
   });
 
   await t.test("tools/list exposes the tool with title + hints", async () => {
