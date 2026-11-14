@@ -47,16 +47,13 @@ function assertToolShape(tool) {
   assert.equal(tool.annotations.readOnlyHint, true, "readOnlyHint");
   assert.equal(tool.annotations.destructiveHint, false, "destructiveHint");
   assert.equal(tool.annotations.openWorldHint, false, "openWorldHint");
-  // icons are OPTIONAL today (R2 adds them). If present, assert the shape;
-  // either way, record presence for the report.
-  if ("icons" in tool && tool.icons !== undefined) {
-    assert.ok(Array.isArray(tool.icons) && tool.icons.length > 0, "icons is a non-empty array");
-    for (const icon of tool.icons) {
-      assert.equal(typeof icon.src, "string", "icon.src is a string");
-      assert.ok(/^https:\/\/|^data:/.test(icon.src), "icon.src is https/data URI");
-    }
-  }
-  return "icons" in tool && tool.icons !== undefined;
+  // Per-tool icons (R2): REQUIRED on every tool now, both transports.
+  assert.ok(Array.isArray(tool.icons) && tool.icons.length > 0, "icons is a non-empty array");
+  const icon = tool.icons[0];
+  assert.equal(icon.src, "https://wishfinity.com/w_icon_256.png", "icon.src");
+  assert.equal(icon.mimeType, "image/png", "icon.mimeType");
+  assert.ok(Array.isArray(icon.sizes) && icon.sizes.includes("256x256"), "icon.sizes includes 256x256");
+  return true;
 }
 
 // --- Shared assertions on a tools/call text payload.
