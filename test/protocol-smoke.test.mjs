@@ -28,7 +28,7 @@ const STDIO_ENTRY = join(REPO, "dist", "index.js");
 // change, it is a deliberate protocol-visible change and this harness should
 // be updated in the same commit — never silently.
 const SERVER_NAME = "wishfinity-mcp-plusw";
-const SERVER_VERSION = "1.3.0";
+const SERVER_VERSION = "1.3.1";
 const ADVERTISED_PROTOCOL = "2025-06-18"; // what the server returns when not asked for a supported legacy one
 const LEGACY_PROTOCOL = "2024-11-05"; // a legacy revision that must still negotiate (back-compat)
 const TOOL_NAME = "add_to_wishlist";
@@ -58,11 +58,27 @@ function assertToolShape(tool) {
   return true;
 }
 
-// --- Shared assertions on a tools/call text payload.
+// --- Shared assertions on a tools/call result.
+// v1.3.1 (G.17 S1 / #195): the result is TWO text blocks — block 0 is a
+// ready-made markdown link (so clients like Grok surface it verbatim instead
+// of paraphrasing display_text), block 1 is the JSON contract, unchanged.
+// parseToolCallPayload reads the JSON (block 1); assertLinkBlock checks block 0.
 function parseToolCallPayload(result) {
-  assert.ok(result && Array.isArray(result.content) && result.content[0], "content block present");
-  assert.equal(result.content[0].type, "text", "content is text");
-  return JSON.parse(result.content[0].text);
+  assert.ok(result && Array.isArray(result.content), "content array present");
+  assert.equal(result.content.length, 2, "two content blocks (link + JSON)");
+  assert.equal(result.content[1].type, "text", "block 1 is text (JSON)");
+  return JSON.parse(result.content[1].text);
+}
+function assertLinkBlock(result, encodedUrl) {
+  assert.ok(result && Array.isArray(result.content) && result.content[0], "link block present");
+  assert.equal(result.content[0].type, "text", "block 0 is text");
+  const link = result.content[0].text;
+  assert.ok(
+    link.startsWith(`[${DISPLAY_TEXT}](`) && link.endsWith(")"),
+    "block 0 is a markdown link labelled with display_text"
+  );
+  assert.ok(link.includes(SOURCE_TAG), "link carries source attribution");
+  if (encodedUrl) assert.ok(link.includes(encodedUrl), "link carries the percent-encoded target URL");
 }
 function assertProductPayload(payload) {
   assert.equal(payload.display_text, DISPLAY_TEXT, "display_text");
@@ -164,11 +180,13 @@ test("stdio transport (node dist/index.js)", async (t) => {
 
     await t.test("tools/call on a product URL returns a link, no note", async () => {
       const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: { url: PRODUCT_URL } });
+      assertLinkBlock(resp.result, encodeURIComponent(PRODUCT_URL));
       assertProductPayload(parseToolCallPayload(resp.result));
     });
 
     await t.test("tools/call on a search URL returns the note", async () => {
       const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: { url: SEARCH_URL } });
+      assertLinkBlock(resp.result, encodeURIComponent(SEARCH_URL));
       assertSearchPayload(parseToolCallPayload(resp.result));
     });
   } finally {
@@ -238,12 +256,16 @@ test("http transport (in-process worker.fetch)", async (t) => {
 
   await t.test("tools/call on a product URL returns a link, no note", async () => {
     const res = await post(worker, rpc("tools/call", { name: TOOL_NAME, arguments: { url: PRODUCT_URL } }));
-    assertProductPayload(parseToolCallPayload((await res.json()).result));
+    const result = (await res.json()).result;
+    assertLinkBlock(result, encodeURIComponent(PRODUCT_URL));
+    assertProductPayload(parseToolCallPayload(result));
   });
 
   await t.test("tools/call on a search URL returns the note", async () => {
     const res = await post(worker, rpc("tools/call", { name: TOOL_NAME, arguments: { url: SEARCH_URL } }));
-    assertSearchPayload(parseToolCallPayload((await res.json()).result));
+    const result = (await res.json()).result;
+    assertLinkBlock(result, encodeURIComponent(SEARCH_URL));
+    assertSearchPayload(parseToolCallPayload(result));
   });
 
   await t.test("malformed JSON body -> -32700 Parse error (400)", async () => {
