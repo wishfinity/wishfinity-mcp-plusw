@@ -28,7 +28,7 @@ const STDIO_ENTRY = join(REPO, "dist", "index.js");
 // change, it is a deliberate protocol-visible change and this harness should
 // be updated in the same commit — never silently.
 const SERVER_NAME = "wishfinity-mcp-plusw";
-const SERVER_VERSION = "1.3.0";
+const SERVER_VERSION = "1.3.1";
 const ADVERTISED_PROTOCOL = "2025-06-18"; // what the server returns when not asked for a supported legacy one
 const LEGACY_PROTOCOL = "2024-11-05"; // a legacy revision that must still negotiate (back-compat)
 const TOOL_NAME = "add_to_wishlist";
