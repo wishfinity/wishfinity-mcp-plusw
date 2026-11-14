@@ -53,7 +53,7 @@
   },
   "mcpName": "io.github.wishfinity/wishfinity-mcp-plusw",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.0"
+    "@modelcontextprotocol/sdk": "^1.32.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241205.0",
