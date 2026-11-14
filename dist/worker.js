@@ -28,6 +28,13 @@ const ADD_TO_WISHLIST_TOOL = {
         destructiveHint: false,
         openWorldHint: false,
     },
+    icons: [
+        {
+            src: "https://wishfinity.com/w_icon_256.png",
+            mimeType: "image/png",
+            sizes: ["256x256"],
+        },
+    ],
 };
 // Prompts definition
 const PROMPTS = [
@@ -103,6 +110,27 @@ The add_to_wishlist tool saves a product to the user's Wishfinity wishlist. It t
         "save for gifting",
     ], null, 2),
 };
+// Advertised MCP protocol version: the value returned when a client does not
+// request a supported one. Bumped off the ancient 2024-11-05 to a current
+// legacy revision; we keep the `initialize` handshake today's clients use.
+const PREFERRED_PROTOCOL_VERSION = "2025-06-18";
+// Legacy revisions this stateless server interoperates with. If a client asks
+// for one of these we echo it (back-compat); otherwise we return the preferred
+// one. Mirrors the SDK's echo-or-default negotiation on the stdio transport
+// (SUPPORTED_PROTOCOL_VERSIONS, dist/esm/types.js). Our behaviour does not vary
+// across these revisions (stateless, one read-only tool, no auth/streaming).
+const SUPPORTED_PROTOCOL_VERSIONS = [
+    "2025-11-25",
+    "2025-06-18",
+    "2025-03-26",
+    "2024-11-05",
+    "2024-10-07",
+];
+function negotiateProtocolVersion(requested) {
+    return typeof requested === "string" && SUPPORTED_PROTOCOL_VERSIONS.includes(requested)
+        ? requested
+        : PREFERRED_PROTOCOL_VERSION;
+}
 // Generate Wishfinity add URL
 function generateAddUrl(productUrl) {
     const encodedUrl = encodeURIComponent(productUrl);
@@ -146,7 +174,7 @@ async function handleMcpRequest(request) {
     switch (method) {
         case "initialize":
             return jsonRpcResponse(id, {
-                protocolVersion: "2024-11-05",
+                protocolVersion: negotiateProtocolVersion(params?.protocolVersion),
                 capabilities: {
                     tools: {},
                     prompts: {},
@@ -154,7 +182,7 @@ async function handleMcpRequest(request) {
                 },
                 serverInfo: {
                     name: "wishfinity-mcp-plusw",
-                    version: "1.2.5",
+                    version: "1.3.0",
                 },
             });
         case "notifications/initialized":
@@ -295,7 +323,7 @@ export default {
             return new Response(JSON.stringify({
                 status: "ok",
                 server: "wishfinity-mcp-plusw",
-                version: "1.2.5",
+                version: "1.3.0",
                 transport: "streamable-http",
             }), {
                 headers: {

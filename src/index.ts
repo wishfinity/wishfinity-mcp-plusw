@@ -37,6 +37,13 @@ const ADD_TO_WISHLIST_TOOL: Tool = {
     destructiveHint: false,
     openWorldHint: false,
   },
+  icons: [
+    {
+      src: "https://wishfinity.com/w_icon_256.png",
+      mimeType: "image/png",
+      sizes: ["256x256"],
+    },
+  ],
 };
 
 // Prompts definition
@@ -143,7 +150,7 @@ function createServer(): Server {
   const server = new Server(
     {
       name: "wishfinity-mcp-plusw",
-      version: "1.2.5",
+      version: "1.3.0",
     },
     {
       capabilities: {
