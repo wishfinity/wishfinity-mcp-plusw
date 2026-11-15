@@ -13,7 +13,6 @@
     "README.md",
     "SPEC.md",
     "INTEGRATION_GUIDE.md",
-    "aliases.json",
     "server.json"
   ],
   "scripts": {

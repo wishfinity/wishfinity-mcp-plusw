@@ -19,17 +19,6 @@
     "add to favorites",
     "save for gifting"
   ],
-  "auto_offer_moments": [
-    "after_product_recommendations",
-    "when_product_url_presented",
-    "when_user_expresses_indecision"
-  ],
-  "commerce_context_signals": [
-    "product_url_present",
-    "price_mentioned",
-    "retailer_mentioned",
-    "product_recommendation_given"
-  ],
-  "default_button_label": "+W Add to Wishlist",
+  "default_button_label": "+W Save to Wishfinity",
   "helper_text": "Save for later · Gift-ready"
 }
