@@ -26,7 +26,7 @@ const ADD_TO_WISHLIST_TOOL: Tool = {
     properties: {
       url: {
         type: "string",
-        description: "The specific product page URL to save. Not a search-results or category page; if only a search page is available, ask the user for the product link. Optional if `title` is given.",
+        description: "The product page URL. Optional if `title` is given.",
       },
       title: {
         type: "string",

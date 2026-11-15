@@ -63,7 +63,8 @@ function assertToolShape(tool) {
   assert.ok(props && props.title, "inputSchema has a title property");
   assert.equal(props.title.type, "string", "title is a string");
   assert.ok(props.title.description.includes("Up to 120 characters"), "title description states the 120-char cap");
-  assert.ok(props.url.description.includes("Optional if `title` is given."), "url description says it is optional when title is given");
+  assert.equal(props.url.description, "The product page URL. Optional if `title` is given.", "url description is Distribution's exact text");
+  assert.ok(!JSON.stringify(tool).includes("ask the user"), "no 'ask the user' instruction anywhere in the tool (schema or description)");
   assert.ok(!(Array.isArray(tool.inputSchema.required) && tool.inputSchema.required.includes("url")), "url is no longer schema-required");
   assert.ok(tool.description.includes("Accepts a product page URL, or a product name when there isn't one."), "description carries the add-by-name wording");
   assert.ok(tool.description.includes("Wishfinity asks the user to confirm the wish before saving it."), "description carries the confirm wording");
