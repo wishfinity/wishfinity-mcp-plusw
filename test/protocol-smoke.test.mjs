@@ -37,6 +37,9 @@ const DISPLAY_TEXT = "+W Save to Wishfinity";
 const SOURCE_TAG = "source=mcp-plusw";
 const PRODUCT_URL = "https://www.amazon.com/dp/B0D1XD1ZV3";
 const SEARCH_URL = "https://www.amazon.com/s?k=coffee+maker";
+// v1.4.0 (G.18): add by name.
+const TITLE = "Dyson V15 cordless vacuum";
+const LONG_TITLE = "x".repeat(121); // 121 > the server's 120-char title cap
 
 // --- Shared assertions on a tools/list result (same shape on both transports).
 function assertToolShape(tool) {
@@ -55,6 +58,16 @@ function assertToolShape(tool) {
   assert.equal(icon.src, "https://wishfinity.com/w_icon_256.png", "icon.src");
   assert.equal(icon.mimeType, "image/png", "icon.mimeType");
   assert.ok(Array.isArray(icon.sizes) && icon.sizes.includes("256x256"), "icon.sizes includes 256x256");
+  // v1.4.0 (G.18): add by name — schema + wording.
+  const props = tool.inputSchema && tool.inputSchema.properties;
+  assert.ok(props && props.title, "inputSchema has a title property");
+  assert.equal(props.title.type, "string", "title is a string");
+  assert.ok(props.title.description.includes("Up to 120 characters"), "title description states the 120-char cap");
+  assert.ok(props.url.description.includes("Optional if `title` is given."), "url description says it is optional when title is given");
+  assert.ok(!(Array.isArray(tool.inputSchema.required) && tool.inputSchema.required.includes("url")), "url is no longer schema-required");
+  assert.ok(tool.description.includes("Accepts a product page URL, or a product name when there isn't one."), "description carries the add-by-name wording");
+  assert.ok(tool.description.includes("Wishfinity asks the user to confirm the wish before saving it."), "description carries the confirm wording");
+  assert.ok(!tool.description.includes("Requires a specific product page URL"), "old URL-required wording is gone");
   return true;
 }
 
@@ -95,6 +108,25 @@ function assertSearchPayload(payload) {
   assert.ok(typeof payload.note === "string" && payload.note.length > 0, "search URL carries a note");
   assert.ok(payload.note.includes("search results"), "note names the page type");
   assert.ok(payload.action_url.includes(SOURCE_TAG), "action_url still carries source attribution");
+}
+// v1.4.0 (G.18): add by name.
+function assertTitlePayload(payload, title) {
+  assert.equal(payload.display_text, DISPLAY_TEXT, "display_text");
+  assert.equal(payload.requires_user_action, true, "requires_user_action");
+  assert.equal(payload.intent, "save_commerce_item", "intent");
+  assert.ok(payload.action_url.includes(SOURCE_TAG), "action_url carries source attribution");
+  assert.ok(payload.action_url.includes("title=" + encodeURIComponent(title)), "action_url carries the percent-encoded title");
+  assert.ok(!payload.action_url.includes("url="), "a title-only save has no url= param");
+  assert.ok(!("note" in payload), "a title save carries no note");
+}
+function assertUrlWinsPayload(payload) {
+  assert.ok(payload.action_url.includes("url=" + encodeURIComponent(PRODUCT_URL)), "url= present (URL wins when both are given)");
+  assert.ok(!payload.action_url.includes("title="), "title= absent when a URL is also given (URL wins)");
+}
+function assertToolError(result, needle) {
+  assert.equal(result.isError, true, "isError is true");
+  assert.ok(Array.isArray(result.content) && result.content[0] && result.content[0].type === "text", "error carries a text block");
+  assert.ok(result.content[0].text.includes(needle), `error message includes "${needle}" (got: ${result.content[0] && result.content[0].text})`);
 }
 
 // =====================================================================
@@ -189,6 +221,27 @@ test("stdio transport (node dist/index.js)", async (t) => {
       assertLinkBlock(resp.result, encodeURIComponent(SEARCH_URL));
       assertSearchPayload(parseToolCallPayload(resp.result));
     });
+
+    await t.test("tools/call with a title only returns a ?title= link", async () => {
+      const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: { title: TITLE } });
+      assertLinkBlock(resp.result, encodeURIComponent(TITLE));
+      assertTitlePayload(parseToolCallPayload(resp.result), TITLE);
+    });
+
+    await t.test("tools/call with both url and title -> URL wins", async () => {
+      const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: { url: PRODUCT_URL, title: TITLE } });
+      assertUrlWinsPayload(parseToolCallPayload(resp.result));
+    });
+
+    await t.test("tools/call with neither url nor title -> tool error", async () => {
+      const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: {} });
+      assertToolError(resp.result, "provide a product url or a title");
+    });
+
+    await t.test("tools/call with a 121-char title -> refused", async () => {
+      const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: { title: LONG_TITLE } });
+      assertToolError(resp.result, "120 characters or fewer");
+    });
   } finally {
     client.close();
   }
@@ -266,6 +319,28 @@ test("http transport (in-process worker.fetch)", async (t) => {
     const result = (await res.json()).result;
     assertLinkBlock(result, encodeURIComponent(SEARCH_URL));
     assertSearchPayload(parseToolCallPayload(result));
+  });
+
+  await t.test("tools/call with a title only returns a ?title= link", async () => {
+    const res = await post(worker, rpc("tools/call", { name: TOOL_NAME, arguments: { title: TITLE } }));
+    const result = (await res.json()).result;
+    assertLinkBlock(result, encodeURIComponent(TITLE));
+    assertTitlePayload(parseToolCallPayload(result), TITLE);
+  });
+
+  await t.test("tools/call with both url and title -> URL wins", async () => {
+    const res = await post(worker, rpc("tools/call", { name: TOOL_NAME, arguments: { url: PRODUCT_URL, title: TITLE } }));
+    assertUrlWinsPayload(parseToolCallPayload((await res.json()).result));
+  });
+
+  await t.test("tools/call with neither url nor title -> tool error", async () => {
+    const res = await post(worker, rpc("tools/call", { name: TOOL_NAME, arguments: {} }));
+    assertToolError((await res.json()).result, "provide a product url or a title");
+  });
+
+  await t.test("tools/call with a 121-char title -> refused", async () => {
+    const res = await post(worker, rpc("tools/call", { name: TOOL_NAME, arguments: { title: LONG_TITLE } }));
+    assertToolError((await res.json()).result, "120 characters or fewer");
   });
 
   await t.test("malformed JSON body -> -32700 Parse error (400)", async () => {
