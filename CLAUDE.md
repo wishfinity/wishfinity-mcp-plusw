@@ -46,9 +46,9 @@ The server supports two transports:
 
 2. **HTTP (remote)** — For web clients, hosted on Cloudflare Workers
    - Source: `src/worker.ts` — wrangler bundles this directly (`dist/worker.js` is built by tsc but NOT used for the deploy)
-   - Endpoint: `https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp` ← the live endpoint
-   - Health: `https://wishfinity-mcp-plusw.wishfinity.workers.dev/health`
-   - ⚠️ `mcp.wishfinity.com` is NOT routed to the Worker (it redirects to the main site); the `wrangler.toml` custom-domain route is commented out.
+   - Primary endpoint: `https://mcp.wishfinity.com/mcp` — routed to the Worker via **CloudFront since 2026-11-12** (PDR § THE MCP SERVER, the branded-endpoint row), NOT via the `wrangler.toml` custom-domain route (that route stays commented out; routing is at CloudFront).
+   - Alternate (always available): `https://wishfinity-mcp-plusw.wishfinity.workers.dev/mcp`
+   - Health: both hosts' `/health` return the live version (measured **1.3.1 on both**, 2026-11-15).
 
 ### Key Files
 
@@ -208,7 +208,7 @@ December 2025 (historical, not an automated suite):
 1. **Button kit is for web embedding only** — Claude cannot display SVG buttons inline; it returns text links instead
 2. **ChatGPT Desktop** — Doesn't support MCP configuration yet; separate ChatGPT App built via OpenAI Apps SDK (pending publishing)
 3. **Amazon blocking** — Claude can't fetch Amazon product pages directly, but wishlist save still works
-4. **`mcp.wishfinity.com` not wired to the Worker** — it currently redirects to the main site; only the `workers.dev` endpoint is live. (v1.3.0 will revisit the custom domain + current-spec Streamable HTTP.)
+4. **~~`mcp.wishfinity.com` not wired to the Worker~~ RESOLVED 2026-11-12** — `https://mcp.wishfinity.com/mcp` is the primary endpoint, routed to the Worker via CloudFront (PDR § THE MCP SERVER). The `workers.dev` host is an always-available alternate; both return the live version (1.3.1 on both, measured 2026-11-15). The `wrangler.toml` custom-domain route is still commented out — the routing is done at CloudFront, not by wrangler.
 5. **`package-lock.json` metadata is stale** — its root `version` reads 1.1.0 and it records sdk `^1.0.0` (vs `package.json` `^1.25.0`). This does **not** break `npm ci`: measured 2026-11-11, `npm ci` **succeeds** (153 packages on Lee's machine) and is **required before `npm publish`**, because `prepublishOnly` runs `tsc` (PDR § THE MCP SERVER row 3). Regenerating the lockfile with `npm install` is deferred to v1.3.0 (folded into the SDK-update commit).
 
 ## Related Projects
