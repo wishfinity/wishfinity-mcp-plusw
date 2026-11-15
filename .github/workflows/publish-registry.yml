@@ -38,7 +38,7 @@ jobs:
   # JOB 1 — publish to npm via trusted publishing (OIDC, provenance).
   # ===================================================================
   publish-npm:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # pinned (#197 / hazard 16: ubuntu-latest moves to Ubuntu 26)
     permissions:
       id-token: write # OIDC token for npm trusted publishing + provenance
       contents: read
@@ -93,7 +93,7 @@ jobs:
   # ===================================================================
   publish-registry:
     needs: publish-npm # FAIL-CLOSED: skipped if the npm publish failed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # pinned (#197 / hazard 16: ubuntu-latest moves to Ubuntu 26)
     permissions:
       id-token: write # OIDC token for the MCP registry
       contents: read
@@ -109,17 +109,22 @@ jobs:
       # GUARD 2 — confirm npm now serves this version (the publish-npm job just
       # made it). Guards against npm propagation lag before we register a link
       # to the package.
+      # GUARD 2 — bounded wait/retry for npm's read-after-publish lag (#197 /
+      # hazard 15: in the v1.3.1 run this failed seconds after a green publish).
+      # Up to 6 attempts, 10s apart (~50s total) before failing.
       - name: Assert this version is live on npm
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF#refs/tags/v}"
-          for i in 1 2 3 4 5; do
+          PUBLISHED=""
+          for i in 1 2 3 4 5 6; do
             PUBLISHED="$(npm view "${PKG_NAME}@${TAG}" version 2>/dev/null || true)"
             [ "$PUBLISHED" = "$TAG" ] && break
-            echo "npm not yet serving ${PKG_NAME}@${TAG} (attempt $i) — waiting"; sleep 5
+            echo "npm not yet serving ${PKG_NAME}@${TAG} (attempt $i/6) — waiting 10s"
+            [ "$i" -lt 6 ] && sleep 10
           done
           echo "npm reports version '${PUBLISHED}' for ${PKG_NAME}@${TAG}"
-          [ "$PUBLISHED" = "$TAG" ] || { echo "::error::${PKG_NAME}@${TAG} is NOT on npm"; exit 1; }
+          [ "$PUBLISHED" = "$TAG" ] || { echo "::error::${PKG_NAME}@${TAG} is NOT on npm after 6 attempts"; exit 1; }
 
       - name: Install cosign (to verify the mcp-publisher release)
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
