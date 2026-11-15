@@ -40,6 +40,12 @@ const SEARCH_URL = "https://www.amazon.com/s?k=coffee+maker";
 // v1.4.0 (G.18): add by name.
 const TITLE = "Dyson V15 cordless vacuum";
 const LONG_TITLE = "x".repeat(121); // 121 > the server's 120-char title cap
+// v1.2.0 prompts/resources (served on both transports).
+const PROMPT_NAMES = ["save_for_later", "shopping_assistant", "gift_ideas"];
+const RESOURCE_URIS = ["wishfinity://guide", "wishfinity://triggers"];
+// Off-rule behaviour-instruction words that must not appear in any served PROSE
+// (Distribution / Anthropic / Meta). Checked by the gate below.
+const BANNED_WORDS = /(proactively|offer|always|trigger)/i;
 
 // --- Shared assertions on a tools/list result (same shape on both transports).
 function assertToolShape(tool) {
@@ -128,6 +134,22 @@ function assertToolError(result, needle) {
   assert.equal(result.isError, true, "isError is true");
   assert.ok(Array.isArray(result.content) && result.content[0] && result.content[0].type === "text", "error carries a text block");
   assert.ok(result.content[0].text.includes(needle), `error message includes "${needle}" (got: ${result.content[0] && result.content[0].text})`);
+}
+// Collect the human-facing PROSE the server serves — NOT identifiers/URIs: the
+// tool description + param descriptions, prompt descriptions + message texts,
+// resource names + descriptions + bodies. (A resource URI like
+// wishfinity://triggers is a client-facing key, not prose, so it is excluded.)
+function collectServedProse({ tool, prompts, promptMessages, resources, resourceBodies }) {
+  const out = [];
+  if (tool) {
+    out.push(tool.description);
+    for (const p of Object.values(tool.inputSchema?.properties || {})) out.push(p.description);
+  }
+  for (const p of prompts || []) out.push(p.description);
+  for (const m of promptMessages || []) out.push(m);
+  for (const r of resources || []) { out.push(r.name); out.push(r.description); }
+  for (const b of resourceBodies || []) out.push(b);
+  return out.filter((s) => typeof s === "string" && s.length > 0);
 }
 
 // =====================================================================
@@ -243,6 +265,37 @@ test("stdio transport (node dist/index.js)", async (t) => {
       const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: { title: LONG_TITLE } });
       assertToolError(resp.result, "120 characters or fewer");
     });
+
+    // --- prompts + resources (v1.2.0), served on stdio ---
+    const sPrompts = (await client.request("prompts/list", {})).result.prompts;
+    const sPromptMessages = [];
+    await t.test("prompts/list + prompts/get (x3)", async () => {
+      assert.deepEqual(sPrompts.map((p) => p.name).sort(), [...PROMPT_NAMES].sort(), "the three prompts");
+      for (const name of PROMPT_NAMES) {
+        const got = (await client.request("prompts/get", { name, arguments: {} })).result;
+        assert.ok(Array.isArray(got.messages) && got.messages.length > 0, `prompts/get ${name} returns messages`);
+        for (const m of got.messages) sPromptMessages.push(m.content.text);
+      }
+    });
+    const sResources = (await client.request("resources/list", {})).result.resources;
+    const sResourceBodies = [];
+    await t.test("resources/list + resources/read (x2)", async () => {
+      assert.deepEqual(sResources.map((r) => r.uri).sort(), [...RESOURCE_URIS].sort(), "the two resources");
+      for (const uri of RESOURCE_URIS) {
+        const got = (await client.request("resources/read", { uri })).result;
+        assert.ok(Array.isArray(got.contents) && got.contents[0] && typeof got.contents[0].text === "string", `resources/read ${uri} returns text`);
+        sResourceBodies.push(got.contents[0].text);
+      }
+    });
+    const sTool = (await client.request("tools/list", {})).result.tools[0];
+    await t.test(
+      "no served prose says proactively/offer/always/trigger",
+      { todo: "EXPECTED FAIL until S5(b): the wishfinity://triggers resource name still reads 'Wishlist Trigger Phrases'. When Distribution renames the name+description, remove this todo marker." },
+      () => {
+        const prose = collectServedProse({ tool: sTool, prompts: sPrompts, promptMessages: sPromptMessages, resources: sResources, resourceBodies: sResourceBodies });
+        for (const s of prose) assert.ok(!BANNED_WORDS.test(s), `off-rule word in served prose: ${JSON.stringify(s).slice(0, 90)}`);
+      }
+    );
   } finally {
     client.close();
   }
@@ -343,6 +396,37 @@ test("http transport (in-process worker.fetch)", async (t) => {
     const res = await post(worker, rpc("tools/call", { name: TOOL_NAME, arguments: { title: LONG_TITLE } }));
     assertToolError((await res.json()).result, "120 characters or fewer");
   });
+
+  // --- prompts + resources (v1.2.0), served on HTTP ---
+  const hPrompts = (await (await post(worker, rpc("prompts/list", {}))).json()).result.prompts;
+  const hPromptMessages = [];
+  await t.test("prompts/list + prompts/get (x3)", async () => {
+    assert.deepEqual(hPrompts.map((p) => p.name).sort(), [...PROMPT_NAMES].sort(), "the three prompts");
+    for (const name of PROMPT_NAMES) {
+      const got = (await (await post(worker, rpc("prompts/get", { name, arguments: {} }))).json()).result;
+      assert.ok(Array.isArray(got.messages) && got.messages.length > 0, `prompts/get ${name} returns messages`);
+      for (const m of got.messages) hPromptMessages.push(m.content.text);
+    }
+  });
+  const hResources = (await (await post(worker, rpc("resources/list", {}))).json()).result.resources;
+  const hResourceBodies = [];
+  await t.test("resources/list + resources/read (x2)", async () => {
+    assert.deepEqual(hResources.map((r) => r.uri).sort(), [...RESOURCE_URIS].sort(), "the two resources");
+    for (const uri of RESOURCE_URIS) {
+      const got = (await (await post(worker, rpc("resources/read", { uri }))).json()).result;
+      assert.ok(Array.isArray(got.contents) && got.contents[0] && typeof got.contents[0].text === "string", `resources/read ${uri} returns text`);
+      hResourceBodies.push(got.contents[0].text);
+    }
+  });
+  const hTool = (await (await post(worker, rpc("tools/list", {}))).json()).result.tools[0];
+  await t.test(
+    "no served prose says proactively/offer/always/trigger",
+    { todo: "EXPECTED FAIL until S5(b): the wishfinity://triggers resource name still reads 'Wishlist Trigger Phrases'. When Distribution renames the name+description, remove this todo marker." },
+    () => {
+      const prose = collectServedProse({ tool: hTool, prompts: hPrompts, promptMessages: hPromptMessages, resources: hResources, resourceBodies: hResourceBodies });
+      for (const s of prose) assert.ok(!BANNED_WORDS.test(s), `off-rule word in served prose: ${JSON.stringify(s).slice(0, 90)}`);
+    }
+  );
 
   await t.test("malformed JSON body -> -32700 Parse error (400)", async () => {
     const res = await post(worker, "{ this is not json");
