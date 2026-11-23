@@ -28,7 +28,7 @@ const STDIO_ENTRY = join(REPO, "dist", "index.js");
 // change, it is a deliberate protocol-visible change and this harness should
 // be updated in the same commit — never silently.
 const SERVER_NAME = "wishfinity-mcp-plusw";
-const SERVER_VERSION = "1.3.1";
+const SERVER_VERSION = "1.4.0";
 const ADVERTISED_PROTOCOL = "2025-06-18"; // what the server returns when not asked for a supported legacy one
 const LEGACY_PROTOCOL = "2024-11-05"; // a legacy revision that must still negotiate (back-compat)
 const TOOL_NAME = "add_to_wishlist";
@@ -37,6 +37,15 @@ const DISPLAY_TEXT = "+W Save to Wishfinity";
 const SOURCE_TAG = "source=mcp-plusw";
 const PRODUCT_URL = "https://www.amazon.com/dp/B0D1XD1ZV3";
 const SEARCH_URL = "https://www.amazon.com/s?k=coffee+maker";
+// v1.4.0 (G.18): add by name.
+const TITLE = "Dyson V15 cordless vacuum";
+const LONG_TITLE = "x".repeat(121); // 121 > the server's 120-char title cap
+// v1.2.0 prompts/resources (served on both transports).
+const PROMPT_NAMES = ["save_for_later", "shopping_assistant", "gift_ideas"];
+const RESOURCE_URIS = ["wishfinity://guide", "wishfinity://triggers"];
+// Off-rule behaviour-instruction words that must not appear in any served PROSE
+// (Distribution / Anthropic / Meta). Checked by the gate below.
+const BANNED_WORDS = /(proactively|offer|always|trigger)/i;
 
 // --- Shared assertions on a tools/list result (same shape on both transports).
 function assertToolShape(tool) {
@@ -55,6 +64,17 @@ function assertToolShape(tool) {
   assert.equal(icon.src, "https://wishfinity.com/w_icon_256.png", "icon.src");
   assert.equal(icon.mimeType, "image/png", "icon.mimeType");
   assert.ok(Array.isArray(icon.sizes) && icon.sizes.includes("256x256"), "icon.sizes includes 256x256");
+  // v1.4.0 (G.18): add by name — schema + wording.
+  const props = tool.inputSchema && tool.inputSchema.properties;
+  assert.ok(props && props.title, "inputSchema has a title property");
+  assert.equal(props.title.type, "string", "title is a string");
+  assert.ok(props.title.description.includes("Up to 120 characters"), "title description states the 120-char cap");
+  assert.equal(props.url.description, "The product page URL. Optional if `title` is given.", "url description is Distribution's exact text");
+  assert.ok(!JSON.stringify(tool).includes("ask the user"), "no 'ask the user' instruction anywhere in the tool (schema or description)");
+  assert.ok(!(Array.isArray(tool.inputSchema.required) && tool.inputSchema.required.includes("url")), "url is no longer schema-required");
+  assert.ok(tool.description.includes("Accepts a product page URL, or a product name when there isn't one."), "description carries the add-by-name wording");
+  assert.ok(tool.description.includes("Wishfinity asks the user to confirm the wish before saving it."), "description carries the confirm wording");
+  assert.ok(!tool.description.includes("Requires a specific product page URL"), "old URL-required wording is gone");
   return true;
 }
 
@@ -95,6 +115,41 @@ function assertSearchPayload(payload) {
   assert.ok(typeof payload.note === "string" && payload.note.length > 0, "search URL carries a note");
   assert.ok(payload.note.includes("search results"), "note names the page type");
   assert.ok(payload.action_url.includes(SOURCE_TAG), "action_url still carries source attribution");
+}
+// v1.4.0 (G.18): add by name.
+function assertTitlePayload(payload, title) {
+  assert.equal(payload.display_text, DISPLAY_TEXT, "display_text");
+  assert.equal(payload.requires_user_action, true, "requires_user_action");
+  assert.equal(payload.intent, "save_commerce_item", "intent");
+  assert.ok(payload.action_url.includes(SOURCE_TAG), "action_url carries source attribution");
+  assert.ok(payload.action_url.includes("title=" + encodeURIComponent(title)), "action_url carries the percent-encoded title");
+  assert.ok(!payload.action_url.includes("url="), "a title-only save has no url= param");
+  assert.ok(!("note" in payload), "a title save carries no note");
+}
+function assertUrlWinsPayload(payload) {
+  assert.ok(payload.action_url.includes("url=" + encodeURIComponent(PRODUCT_URL)), "url= present (URL wins when both are given)");
+  assert.ok(!payload.action_url.includes("title="), "title= absent when a URL is also given (URL wins)");
+}
+function assertToolError(result, needle) {
+  assert.equal(result.isError, true, "isError is true");
+  assert.ok(Array.isArray(result.content) && result.content[0] && result.content[0].type === "text", "error carries a text block");
+  assert.ok(result.content[0].text.includes(needle), `error message includes "${needle}" (got: ${result.content[0] && result.content[0].text})`);
+}
+// Collect the human-facing PROSE the server serves — NOT identifiers/URIs: the
+// tool description + param descriptions, prompt descriptions + message texts,
+// resource names + descriptions + bodies. (A resource URI like
+// wishfinity://triggers is a client-facing key, not prose, so it is excluded.)
+function collectServedProse({ tool, prompts, promptMessages, resources, resourceBodies }) {
+  const out = [];
+  if (tool) {
+    out.push(tool.description);
+    for (const p of Object.values(tool.inputSchema?.properties || {})) out.push(p.description);
+  }
+  for (const p of prompts || []) out.push(p.description);
+  for (const m of promptMessages || []) out.push(m);
+  for (const r of resources || []) { out.push(r.name); out.push(r.description); }
+  for (const b of resourceBodies || []) out.push(b);
+  return out.filter((s) => typeof s === "string" && s.length > 0);
 }
 
 // =====================================================================
@@ -189,6 +244,58 @@ test("stdio transport (node dist/index.js)", async (t) => {
       assertLinkBlock(resp.result, encodeURIComponent(SEARCH_URL));
       assertSearchPayload(parseToolCallPayload(resp.result));
     });
+
+    await t.test("tools/call with a title only returns a ?title= link", async () => {
+      const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: { title: TITLE } });
+      assertLinkBlock(resp.result, encodeURIComponent(TITLE));
+      assertTitlePayload(parseToolCallPayload(resp.result), TITLE);
+    });
+
+    await t.test("tools/call with both url and title -> URL wins", async () => {
+      const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: { url: PRODUCT_URL, title: TITLE } });
+      assertUrlWinsPayload(parseToolCallPayload(resp.result));
+    });
+
+    await t.test("tools/call with neither url nor title -> tool error", async () => {
+      const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: {} });
+      assertToolError(resp.result, "provide a product url or a title");
+    });
+
+    await t.test("tools/call with a 121-char title -> refused", async () => {
+      const resp = await client.request("tools/call", { name: TOOL_NAME, arguments: { title: LONG_TITLE } });
+      assertToolError(resp.result, "120 characters or fewer");
+    });
+
+    // --- prompts + resources (v1.2.0), served on stdio ---
+    const sPrompts = (await client.request("prompts/list", {})).result.prompts;
+    const sPromptMessages = [];
+    await t.test("prompts/list + prompts/get (x3)", async () => {
+      assert.deepEqual(sPrompts.map((p) => p.name).sort(), [...PROMPT_NAMES].sort(), "the three prompts");
+      for (const name of PROMPT_NAMES) {
+        const got = (await client.request("prompts/get", { name, arguments: {} })).result;
+        assert.ok(Array.isArray(got.messages) && got.messages.length > 0, `prompts/get ${name} returns messages`);
+        for (const m of got.messages) sPromptMessages.push(m.content.text);
+      }
+    });
+    const sResources = (await client.request("resources/list", {})).result.resources;
+    const sResourceBodies = [];
+    await t.test("resources/list + resources/read (x2)", async () => {
+      assert.deepEqual(sResources.map((r) => r.uri).sort(), [...RESOURCE_URIS].sort(), "the two resources");
+      for (const uri of RESOURCE_URIS) {
+        const got = (await client.request("resources/read", { uri })).result;
+        assert.ok(Array.isArray(got.contents) && got.contents[0] && typeof got.contents[0].text === "string", `resources/read ${uri} returns text`);
+        sResourceBodies.push(got.contents[0].text);
+      }
+    });
+    const sTool = (await client.request("tools/list", {})).result.tools[0];
+    await t.test(
+      "no served prose says proactively/offer/always/trigger",
+      { todo: "EXPECTED FAIL until S5(b): the wishfinity://triggers resource name still reads 'Wishlist Trigger Phrases'. When Distribution renames the name+description, remove this todo marker." },
+      () => {
+        const prose = collectServedProse({ tool: sTool, prompts: sPrompts, promptMessages: sPromptMessages, resources: sResources, resourceBodies: sResourceBodies });
+        for (const s of prose) assert.ok(!BANNED_WORDS.test(s), `off-rule word in served prose: ${JSON.stringify(s).slice(0, 90)}`);
+      }
+    );
   } finally {
     client.close();
   }
@@ -267,6 +374,59 @@ test("http transport (in-process worker.fetch)", async (t) => {
     assertLinkBlock(result, encodeURIComponent(SEARCH_URL));
     assertSearchPayload(parseToolCallPayload(result));
   });
+
+  await t.test("tools/call with a title only returns a ?title= link", async () => {
+    const res = await post(worker, rpc("tools/call", { name: TOOL_NAME, arguments: { title: TITLE } }));
+    const result = (await res.json()).result;
+    assertLinkBlock(result, encodeURIComponent(TITLE));
+    assertTitlePayload(parseToolCallPayload(result), TITLE);
+  });
+
+  await t.test("tools/call with both url and title -> URL wins", async () => {
+    const res = await post(worker, rpc("tools/call", { name: TOOL_NAME, arguments: { url: PRODUCT_URL, title: TITLE } }));
+    assertUrlWinsPayload(parseToolCallPayload((await res.json()).result));
+  });
+
+  await t.test("tools/call with neither url nor title -> tool error", async () => {
+    const res = await post(worker, rpc("tools/call", { name: TOOL_NAME, arguments: {} }));
+    assertToolError((await res.json()).result, "provide a product url or a title");
+  });
+
+  await t.test("tools/call with a 121-char title -> refused", async () => {
+    const res = await post(worker, rpc("tools/call", { name: TOOL_NAME, arguments: { title: LONG_TITLE } }));
+    assertToolError((await res.json()).result, "120 characters or fewer");
+  });
+
+  // --- prompts + resources (v1.2.0), served on HTTP ---
+  const hPrompts = (await (await post(worker, rpc("prompts/list", {}))).json()).result.prompts;
+  const hPromptMessages = [];
+  await t.test("prompts/list + prompts/get (x3)", async () => {
+    assert.deepEqual(hPrompts.map((p) => p.name).sort(), [...PROMPT_NAMES].sort(), "the three prompts");
+    for (const name of PROMPT_NAMES) {
+      const got = (await (await post(worker, rpc("prompts/get", { name, arguments: {} }))).json()).result;
+      assert.ok(Array.isArray(got.messages) && got.messages.length > 0, `prompts/get ${name} returns messages`);
+      for (const m of got.messages) hPromptMessages.push(m.content.text);
+    }
+  });
+  const hResources = (await (await post(worker, rpc("resources/list", {}))).json()).result.resources;
+  const hResourceBodies = [];
+  await t.test("resources/list + resources/read (x2)", async () => {
+    assert.deepEqual(hResources.map((r) => r.uri).sort(), [...RESOURCE_URIS].sort(), "the two resources");
+    for (const uri of RESOURCE_URIS) {
+      const got = (await (await post(worker, rpc("resources/read", { uri }))).json()).result;
+      assert.ok(Array.isArray(got.contents) && got.contents[0] && typeof got.contents[0].text === "string", `resources/read ${uri} returns text`);
+      hResourceBodies.push(got.contents[0].text);
+    }
+  });
+  const hTool = (await (await post(worker, rpc("tools/list", {}))).json()).result.tools[0];
+  await t.test(
+    "no served prose says proactively/offer/always/trigger",
+    { todo: "EXPECTED FAIL until S5(b): the wishfinity://triggers resource name still reads 'Wishlist Trigger Phrases'. When Distribution renames the name+description, remove this todo marker." },
+    () => {
+      const prose = collectServedProse({ tool: hTool, prompts: hPrompts, promptMessages: hPromptMessages, resources: hResources, resourceBodies: hResourceBodies });
+      for (const s of prose) assert.ok(!BANNED_WORDS.test(s), `off-rule word in served prose: ${JSON.stringify(s).slice(0, 90)}`);
+    }
+  );
 
   await t.test("malformed JSON body -> -32700 Parse error (400)", async () => {
     const res = await post(worker, "{ this is not json");

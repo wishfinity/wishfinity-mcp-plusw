@@ -3,7 +3,7 @@
   "name": "io.github.wishfinity/wishfinity-mcp-plusw",
   "description": "Save any product URL to your Wishfinity wishlist. Works with any MCP client.",
   "title": "Wishfinity +W",
-  "websiteUrl": "https://info.wishfinity.com/integrations/ai/claude",
+  "websiteUrl": "https://info.wishfinity.com/integrations/overview",
   "icons": [
     {
       "src": "https://wishfinity.com/w_icon_256.png",
@@ -15,12 +15,12 @@
     "url": "https://github.com/wishfinity/wishfinity-mcp-plusw",
     "source": "github"
   },
-  "version": "1.3.1",
+  "version": "1.4.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "wishfinity-mcp-plusw",
-      "version": "1.3.1",
+      "version": "1.4.0",
       "transport": {
         "type": "stdio"
       }

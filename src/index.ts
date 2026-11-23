@@ -20,16 +20,19 @@ const WISHFINITY_ADD_URL = "https://wishfinity.com/add";
 const ADD_TO_WISHLIST_TOOL: Tool = {
   name: "add_to_wishlist",
   title: "Add to Wishfinity wishlist",
-  description: `Saves a product to the user's Wishfinity wishlist, so they can find it again, sort it into lists, and share it with friends and family. Use when the user wants to save, bookmark, remember or wishlist a product, or keep a gift idea for later (e.g. "save this for later", "add this to my wishlist", "save this as a gift idea for my mom"). Requires a specific product page URL, not a search-results or category page; if only a search page is available, ask the user for the product link. Works with any store. Wishfinity looks up the product's name, description, image and price itself when the link is opened. Returns a link the user opens to finish the save on wishfinity.com, where people without an account can sign up. Does not read or change existing lists.`,
+  description: `Saves a product to the user's Wishfinity wishlist, so they can find it again, sort it into lists, and share it with friends and family. Use when the user wants to save, bookmark, remember or wishlist a product, or keep a gift idea for later (e.g. "save this for later", "add this to my wishlist", "save this as a gift idea for my mom"). Accepts a product page URL, or a product name when there isn't one. With a name, Wishfinity asks the user to confirm the wish before saving it. Works with any store. Wishfinity looks up the product's name, description, image and price itself when the link is opened. Returns a link the user opens to finish the save on wishfinity.com, where people without an account can sign up. Does not read or change existing lists.`,
   inputSchema: {
     type: "object" as const,
     properties: {
       url: {
         type: "string",
-        description: "The specific product page URL to save. Not a search-results or category page; if only a search page is available, ask the user for the product link.",
+        description: "The product page URL. Optional if `title` is given.",
+      },
+      title: {
+        type: "string",
+        description: "Product name, used when no product page URL is available (for example, a product the user named or showed in a photo). Up to 120 characters.",
       },
     },
-    required: ["url"],
   },
   annotations: {
     title: "Add to Wishfinity wishlist",
@@ -135,6 +138,14 @@ function generateAddUrl(productUrl: string): string {
   return `${WISHFINITY_ADD_URL}?url=${encodedUrl}&source=mcp-plusw`;
 }
 
+// Build the add link for a bare product name (no URL). The web /add page shows
+// a confirm card for a title (G.16 / #196). (G.18 S1 / add-by-name.)
+const MAX_TITLE_LENGTH = 120;
+function generateAddTitleUrl(title: string): string {
+  const encodedTitle = encodeURIComponent(title);
+  return `${WISHFINITY_ADD_URL}?title=${encodedTitle}&source=mcp-plusw`;
+}
+
 // Validate URL format
 function isValidUrl(url: string): boolean {
   try {
@@ -150,7 +161,7 @@ function createServer(): Server {
   const server = new Server(
     {
       name: "wishfinity-mcp-plusw",
-      version: "1.3.1",
+      version: "1.4.0",
     },
     {
       capabilities: {
@@ -184,36 +195,51 @@ function createServer(): Server {
       };
     }
 
-    const url = (args as { url?: string })?.url;
+    const url = (args as { url?: string; title?: string })?.url;
+    const rawTitle = (args as { url?: string; title?: string })?.title;
+    const title = typeof rawTitle === "string" ? rawTitle.trim() : "";
 
-    // Validate input
-    if (!url) {
+    // At least one of url / title is required; if both are given, URL wins.
+    let actionUrl: string;
+    let note: string | undefined;
+    if (url) {
+      if (!isValidUrl(url)) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: Invalid URL format: ${url}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+      actionUrl = generateAddUrl(url);
+      ({ note } = classifyWishlistUrl(url));
+    } else if (title) {
+      if (title.length > MAX_TITLE_LENGTH) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: title must be ${MAX_TITLE_LENGTH} characters or fewer (got ${title.length})`,
+            },
+          ],
+          isError: true,
+        };
+      }
+      actionUrl = generateAddTitleUrl(title);
+    } else {
       return {
         content: [
           {
             type: "text",
-            text: "Error: Product URL is required",
+            text: "Error: provide a product url or a title to save",
           },
         ],
         isError: true,
       };
     }
-
-    if (!isValidUrl(url)) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error: Invalid URL format: ${url}`,
-          },
-        ],
-        isError: true,
-      };
-    }
-
-    // Generate the Wishfinity add link
-    const actionUrl = generateAddUrl(url);
-    const { note } = classifyWishlistUrl(url);
 
     // Return structured response
     const response = {
