@@ -192,7 +192,6 @@ The server also registers a few optional prompts (`save_for_later`, `shopping_as
 - [MCP Protocol](https://modelcontextprotocol.io)
 - [npm package](https://www.npmjs.com/package/wishfinity-mcp-plusw)
 - [MCP Registry](https://registry.modelcontextprotocol.io)
-- Support: play@wishfinity.com
 
 ---
 
